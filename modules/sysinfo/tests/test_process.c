@@ -21,13 +21,13 @@ int main(void) {
 
     int found_self = 0;
     for (size_t i = 0; i < array.count; i++) {
-        if (array.processes[i].pid == pid) {
+        if (array.elements[i].pid == pid) {
             found_self = 1;
 
-            printf("Found self! Name: %s, RSS: %lu KB\n", array.processes[i].name, array.processes[i].rss_kb);
+            printf("Found self! Name: %s, RSS: %lu KB\n", array.elements[i].name, array.elements[i].rss_kb);
 
-            assert(strlen(array.processes[i].name) > 0);
-            assert(array.processes[i].rss_kb > 0);
+            assert(strlen(array.elements[i].name) > 0);
+            assert(array.elements[i].rss_kb > 0);
             break;
         }
     }

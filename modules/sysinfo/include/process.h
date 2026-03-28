@@ -10,6 +10,7 @@
 
 typedef struct {
     int           pid;
+    char          state;
     char          name[256];
     unsigned long utime;  // user time ticks
     unsigned long stime;  // kernel time ticks
@@ -17,7 +18,7 @@ typedef struct {
 } process_t;
 
 typedef struct {
-    process_t *processes;
+    process_t *elements;
     size_t     count;
     size_t     capacity;
 } process_array_t;

@@ -64,14 +64,15 @@ static int parse_proc_stat(const pid_t pid, process_t *process) {
     closing_parenthesis += 2;
 
     const int scanned = sscanf(closing_parenthesis,
-                         "%*c %*d %*d %*d %*d %*d %*u %*lu %*lu %*lu %*lu " // Fields 3-13 (Skipped)
-                         "%lu "                                             // Field 14: utime
-                         "%lu "                                             // Field 15: stime
-                         "%*ld %*ld %*ld %*ld %*ld %*ld %*llu %*lu "        // Fields 16-23 (Skipped)
-                         "%ld",                                             // Field 24: rss (Resident Set Size)
-                         &process->utime,
-                         &process->stime,
-                         &process->rss_kb);
+                               "%c %*d %*d %*d %*d %*d %*u %*lu %*lu %*lu %*lu " // Fields 3-13 (Skipped)
+                               "%lu "                                             // Field 14: utime
+                               "%lu "                                             // Field 15: stime
+                               "%*ld %*ld %*ld %*ld %*ld %*ld %*llu %*lu "        // Fields 16-23 (Skipped)
+                               "%ld",                                             // Field 24: rss (Resident Set Size)
+                               &process->state,
+                               &process->utime,
+                               &process->stime,
+                               &process->rss_kb);
 
     if (scanned < 3) {
         fprintf(stderr, "Failed to parse %s: %d. File must contain at least 3 numbers\n", path, errno);
@@ -81,37 +82,34 @@ static int parse_proc_stat(const pid_t pid, process_t *process) {
     return 0;
 }
 
-stat_result_t process_fetch_all(process_array_t *array) {
-    if (!array) {
-        return STAT_ERR_INVALID;
+static int process_array_push(process_array_t *array, const process_t *item) {
+    if (array->count >= array->capacity) {
+        size_t     new_capacity = array->capacity == 0 ? 100 : array->capacity * 2;
+        process_t *new_ptr      = realloc(array->elements, new_capacity * sizeof(process_t));
+        if (!new_ptr) return 0;
+        array->elements = new_ptr;
+        array->capacity = new_capacity;
     }
+
+    array->elements[array->count++] = *item;
+    return 1;
+}
+
+stat_result_t process_fetch_all(process_array_t *array) {
+    if (!array) return STAT_ERR_INVALID;
 
     DIR *dir = opendir("/proc");
-    if (!dir) {
-        return STAT_ERR_OPEN;
-    }
+    if (!dir) return STAT_ERR_OPEN;
 
-    array->count = 0;
+    array->count    = 0;
     struct dirent *entry;
 
     while ((entry = readdir(dir)) != NULL) {
         if (entry->d_type == DT_DIR && is_pid_dir(entry->d_name)) {
-            // Check array capacity and grow if needed.
-            if (array->count >= array->capacity) {
-                const size_t new_capacity = array->capacity == 0 ? 32 : array->capacity * 2;
-                process_t *  new_ptr      = realloc(array->processes, new_capacity * sizeof(process_t));
-                if (!new_ptr) {
-                    closedir(dir);
-                    return STAT_ERR_MALLOC;
-                }
-                array->processes = new_ptr;
-                array->capacity  = new_capacity;
-            }
-
-            process_t *process = &array->processes[array->count];
-            const int pid = (int) strtol(entry->d_name, NULL, 10);
-            if (parse_proc_stat(pid, process) == 0) {
-                array->count++;
+            const int pid     = (int) strtol(entry->d_name, NULL, 10);
+            process_t process = {0};
+            if (parse_proc_stat(pid, &process) == 0) {
+                process_array_push(array, &process);
             }
         }
     }
@@ -121,9 +119,9 @@ stat_result_t process_fetch_all(process_array_t *array) {
 
 void process_array_free(process_array_t *array) {
     if (array) {
-        free(array->processes);
-        array->processes = NULL;
-        array->count     = 0;
-        array->capacity  = 0;
+        free(array->elements);
+        array->elements = NULL;
+        array->count    = 0;
+        array->capacity = 0;
     }
 }
