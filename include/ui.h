@@ -8,20 +8,24 @@
 #define HISTORY_SIZE 100
 #include <gtk/gtk.h>
 
+#include "sysinfo.h"
 #include "../modules/sysinfo/include/cpu.h"
 
 typedef struct {
-    // Widgets (View).
+    // View
     GtkWidget *window;
     GtkWidget *notebook;
     GtkWidget *cpu_bar;
     GtkWidget *memory_bar;
     GtkWidget *drawing_area;
 
-    // Telemetry State (Model).
+    GtkTreeStore *process_store;
+
+    // Model
+    sysinfo_t   sysinfo;
     cpu_stats_t last_cpu_stats;
-    double cpu_history[HISTORY_SIZE];
-    int history_count;
+    double      cpu_history[HISTORY_SIZE];
+    int         history_count;
 } app_context_t;
 
 /**
@@ -29,6 +33,6 @@ typedef struct {
  * @param ctx Pointer to the application context to be populated with widgets.
  * @return The top-level GtkWidget (the window).
  */
-GtkWidget *ui_create_window(app_context_t *ctx);
+void ui_create_window(app_context_t *ctx);
 
 #endif //CLUELESS_TASK_MGR_UI_H

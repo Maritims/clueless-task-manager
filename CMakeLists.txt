@@ -41,7 +41,9 @@ file(GLOB_RECURSE APP_SOURCES
         "src/callbacks.c"
         "src/main.c"
         "src/style.c"
-        "src/ui.c"
+        "src/ui.c",
+        "src/tabs/process_tab.c"
+        "src/tabs/performance_tab.c"
 )
 
 # -----------------------------------------------
@@ -53,7 +55,9 @@ pkg_check_modules(GTK3 REQUIRED gtk+-3.0)
 # -----------------------------------------------
 # Build application
 # -----------------------------------------------
-add_executable(clueless-task-mgr ${APP_SOURCES})
+add_executable(clueless-task-mgr ${APP_SOURCES}
+        include/tabs/process_tab.h
+        src/tabs/process_tab.c)
 
 # Link libraries
 target_link_libraries(clueless-task-mgr PRIVATE sysinfo ${GTK3_LIBRARIES})

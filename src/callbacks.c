@@ -6,6 +6,7 @@
 
 #include "sysinfo.h"
 #include "ui.h"
+#include "tabs/process_tab.h"
 
 static void update_history(app_context_t *ctx, const double new_load) {
     if (ctx->history_count < HISTORY_SIZE) {
@@ -22,8 +23,8 @@ static void update_history(app_context_t *ctx, const double new_load) {
 }
 
 gboolean on_draw(GtkWidget *widget, cairo_t *cr, gpointer data) {
-    app_context_t *ctx = (app_context_t*) data;
-    GtkAllocation allocation;
+    app_context_t *ctx = (app_context_t *) data;
+    GtkAllocation  allocation;
     gtk_widget_get_allocation(widget, &allocation);
 
     // Draw background
@@ -37,7 +38,7 @@ gboolean on_draw(GtkWidget *widget, cairo_t *cr, gpointer data) {
         cairo_move_to(cr, i, 0);
         cairo_line_to(cr, i, allocation.height);
     }
-    for (int i = 0; i < allocation.height; i+= 20) {
+    for (int i = 0; i < allocation.height; i += 20) {
         cairo_move_to(cr, 0, i);
         cairo_line_to(cr, allocation.width, i);
     }
@@ -70,21 +71,25 @@ gboolean on_draw(GtkWidget *widget, cairo_t *cr, gpointer data) {
 }
 
 gboolean on_tick(gpointer data) {
-    app_context_t *ctx = (app_context_t*) data;
-    sysinfo_t stats;
+    app_context_t *ctx = data;
 
-    if (sys_stats_fetch_all(&stats) == STAT_SUCCESS) {
-        const double cpu_load = cpu_calculate_load(&ctx->last_cpu_stats, &stats.cpu);
+    if (sysinfo_fetch(&ctx->sysinfo) == STAT_SUCCESS) {
+
+        process_tab_update(ctx->process_store, &ctx->sysinfo.processes);
+
+        const double cpu_load = cpu_calculate_load(&ctx->last_cpu_stats, &ctx->sysinfo.cpu);
 
         // Update progress bars.
         gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(ctx->cpu_bar), cpu_load / 100.0);
-        gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(ctx->memory_bar), stats.memory.used_percent / 100.0);
+        gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(ctx->memory_bar), ctx->sysinfo.memory.used_percent / 100.0);
 
         // Push to history graph.
         update_history(ctx, cpu_load);
 
         // Save current stats for next delta.
-        ctx->last_cpu_stats = stats.cpu;
+        ctx->last_cpu_stats = ctx->sysinfo.cpu;
+    } else {
+        fprintf(stderr, "Failed to fetch system stats\n");
     }
 
     return TRUE; // Return TRUE to keep the g_timeout timer running.

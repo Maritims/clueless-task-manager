@@ -16,15 +16,16 @@ int main(int argc, char **argv) {
 
     app_context_t *ctx = g_new0(app_context_t, 1);
     cpu_fetch_stats(&ctx->last_cpu_stats);
+    sysinfo_fetch(&ctx->sysinfo);
 
     // Build UI.
-    GtkWidget *window = ui_create_window(ctx);
-    g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), ctx);
+    ui_create_window(ctx);
+    g_signal_connect(ctx->window, "destroy", G_CALLBACK(gtk_main_quit), ctx);
 
     // Start 1-second heartbeat.
     g_timeout_add(1000, on_tick, ctx);
 
-    gtk_widget_show_all(window);
+    gtk_widget_show_all(ctx->window);
     gtk_main();
 
     return 0;

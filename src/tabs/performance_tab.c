@@ -3,7 +3,7 @@
 //
 
 #include <gtk/gtk.h>
-#include "tabs/performance.h"
+#include "tabs/performance_tab.h"
 
 #include "callbacks.h"
 #include "style.h"
