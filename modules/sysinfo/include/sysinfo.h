@@ -9,11 +9,13 @@
 #include "common.h"
 #include "cpu.h"
 #include "memory.h"
+#include "process.h"
 
 typedef struct {
-    cpu_stats_t    cpu;
-    memory_stats_t memory;
-    time_t         timestamp;
+    cpu_stats_t     cpu;
+    memory_stats_t  memory;
+    process_array_t processes;
+    time_t          timestamp;
 } sysinfo_t;
 
 stat_result_t sysinfo_fetch(sysinfo_t *sysinfo);

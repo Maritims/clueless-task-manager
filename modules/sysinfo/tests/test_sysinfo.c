@@ -14,6 +14,7 @@ int main(void) {
     assert(sysinfo.timestamp > 0);
     assert(sysinfo.cpu.total_sum > 0);
     assert(sysinfo.memory.total > 0);
+    assert(sysinfo.processes.count > 0);
 
     return 0;
 }

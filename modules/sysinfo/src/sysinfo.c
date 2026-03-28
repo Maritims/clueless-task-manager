@@ -55,6 +55,12 @@ stat_result_t sysinfo_fetch(sysinfo_t *sysinfo) {
         return memory_result;
     }
 
+    const stat_result_t process_result = process_fetch_all(&sysinfo->processes);
+    if (process_result != STAT_SUCCESS) {
+        fprintf(stderr, "Failed to fetch process stats\n");
+        return process_result;
+    }
+
     sysinfo->timestamp = time(NULL);
 
     return STAT_SUCCESS;
