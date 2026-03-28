@@ -11,20 +11,19 @@
 #include "process.h"
 
 int main(void) {
-    pid_t pid = getpid();
-    printf("Test is running with PID: %d\n", pid);
-
-    process_array_t array = {0};
+    process_array_t     array  = {0};
+    const pid_t         pid    = getpid();
     const stat_result_t result = process_fetch_all(&array);
 
     assert(result == STAT_SUCCESS);
+    assert(array.capacity > 0);
     assert(array.count > 0);
 
     int found_self = 0;
     for (size_t i = 0; i < array.count; i++) {
         if (array.processes[i].pid == pid) {
             found_self = 1;
-            
+
             printf("Found self! Name: %s, RSS: %lu KB\n", array.processes[i].name, array.processes[i].rss_kb);
 
             assert(strlen(array.processes[i].name) > 0);
@@ -34,9 +33,7 @@ int main(void) {
     }
 
     assert(found_self && "The parser failed to find the current running process in /proc");
-    
     process_array_free(&array);
-    
-    printf("Integration test passed: Real /proc data parsed successfully!\n");
+
     return 0;
 }

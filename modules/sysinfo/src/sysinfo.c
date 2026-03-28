@@ -9,6 +9,8 @@
 #include "memory.h"
 #include "sysinfo.h"
 
+#include <stdlib.h>
+
 /**
  * Utility function for converting a value in kB to another unit.
  * @param kb_val The original value to convert
@@ -36,26 +38,30 @@ static double convert_unit(const unsigned long kb_val, const data_unit_t unit, c
     }
 }
 
-stat_result_t sys_stats_fetch_all(sysinfo_t *sysinfo) {
+stat_result_t sysinfo_fetch(sysinfo_t *sysinfo) {
     if (!sysinfo) {
         return STAT_ERR_OPEN;
     }
 
-    stat_result_t memory_result = memory_fetch_stats(&sysinfo->memory);
-    if (memory_result != STAT_SUCCESS) {
-        fprintf(stderr, "Failed to fetch memory stats\n");
-        return memory_result;
-    }
-
-    stat_result_t cpu_result = cpu_fetch_stats(&sysinfo->cpu);
+    const stat_result_t cpu_result = cpu_fetch_stats(&sysinfo->cpu);
     if (cpu_result != STAT_SUCCESS) {
         fprintf(stderr, "Failed to fetch CPU stats\n");
         return cpu_result;
     }
 
+    const stat_result_t memory_result = memory_fetch_stats(&sysinfo->memory);
+    if (memory_result != STAT_SUCCESS) {
+        fprintf(stderr, "Failed to fetch memory stats\n");
+        return memory_result;
+    }
+
     sysinfo->timestamp = time(NULL);
 
     return STAT_SUCCESS;
+}
+
+void sysinfo_free(sysinfo_t *sysinfo) {
+    free(sysinfo);
 }
 
 void sys_stats_print(const sysinfo_t *stats, const double cpu_load, data_unit_t unit) {
