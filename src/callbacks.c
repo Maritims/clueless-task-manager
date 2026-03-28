@@ -4,7 +4,7 @@
 
 #include "callbacks.h"
 
-#include "sys_stats.h"
+#include "sysinfo.h"
 #include "ui.h"
 
 static void update_history(app_context_t *ctx, const double new_load) {
@@ -71,7 +71,7 @@ gboolean on_draw(GtkWidget *widget, cairo_t *cr, gpointer data) {
 
 gboolean on_tick(gpointer data) {
     app_context_t *ctx = (app_context_t*) data;
-    sys_stats_t stats;
+    sysinfo_t stats;
 
     if (sys_stats_fetch_all(&stats) == STAT_SUCCESS) {
         const double cpu_load = cpu_calculate_load(&ctx->last_cpu_stats, &stats.cpu);

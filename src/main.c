@@ -6,12 +6,13 @@
 #include <gtk/gtk.h>
 
 #include "callbacks.h"
-#include "cpu.h"
+#include "../modules/sysinfo/include/cpu.h"
 #include "ui.h"
+#include "style.h"
 
 int main(int argc, char **argv) {
     gtk_init(&argc, &argv);
-    ui_apply_styles();
+    style_init();
 
     app_context_t *ctx = g_new0(app_context_t, 1);
     cpu_fetch_stats(&ctx->last_cpu_stats);

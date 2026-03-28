@@ -1,35 +1,62 @@
 cmake_minimum_required(VERSION 3.20)
-project(clueless_task_mgr C)
+project(clueless_task_mgr
+        VERSION     0.0.1
+        LANGUAGES   C
+)
 
+# -----------------------------------------------
+# Compiler settings
+# -----------------------------------------------
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
-# Find the GTK package.
+# Output directories
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
+
+
+# Enable warnings and treat them as errors.
+add_compile_options(
+        -Wall                   # Enable most common warnings.
+        -Wextra                 # Enable less common warnings not included by -Wall.
+        -Wstrict-prototypes     # Require functions to have argument types.
+        -pedantic               # Enforce strict ISO C90 compliance.
+)
+
+# -----------------------------------------------
+# Include directories
+# -----------------------------------------------
+include_directories(${CMAKE_SOURCE_DIR}/include ${GTK3_INCLUDE_DIRS})
+
+# -----------------------------------------------
+# Modules
+# -----------------------------------------------
+add_subdirectory(modules/sysinfo)
+
+# -----------------------------------------------
+# Source files
+# -----------------------------------------------
+file(GLOB_RECURSE APP_SOURCES
+        "src/callbacks.c"
+        "src/main.c"
+        "src/style.c"
+        "src/ui.c"
+)
+
+# -----------------------------------------------
+# Dependencies
+# -----------------------------------------------
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GTK3 REQUIRED gtk+-3.0)
 
-# Include local headers and GTK headers.
-include_directories(include ${GTK3_INCLUDE_DIRS})
+# -----------------------------------------------
+# Build application
+# -----------------------------------------------
+add_executable(clueless-task-mgr ${APP_SOURCES})
 
-# Gather source files (.c).
-file(GLOB_RECURSE SOURCES "src/*.c")
+# Link libraries
+target_link_libraries(clueless-task-mgr PRIVATE sysinfo ${GTK3_LIBRARIES})
 
-# Define the executable
-add_executable(clueless_task_mgr ${SOURCES}
-        src/ui.c
-        include/ui.h
-        include/callbacks.h
-        src/callbacks.c)
-
-# Link the GTK libraries.
-target_link_libraries(clueless_task_mgr ${GTK3_LIBRARIES})
-
-# Add the GTK compiler flags.
-add_definitions(${GTK3_CFLAGS_OTHER})
-
+# Enable testing
 enable_testing()
-
-add_executable(run_tests tests/test_main.c src/cpu.c src/memory.c src/sys_stats.c)
-
-target_link_libraries(run_tests ${GTK3_LIBRARIES})
-add_test(NAME AllStatsTests COMMAND run_tests)

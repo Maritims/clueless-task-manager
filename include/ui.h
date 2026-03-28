@@ -8,11 +8,12 @@
 #define HISTORY_SIZE 100
 #include <gtk/gtk.h>
 
-#include "cpu.h"
+#include "../modules/sysinfo/include/cpu.h"
 
 typedef struct {
     // Widgets (View).
     GtkWidget *window;
+    GtkWidget *notebook;
     GtkWidget *cpu_bar;
     GtkWidget *memory_bar;
     GtkWidget *drawing_area;
@@ -29,7 +30,5 @@ typedef struct {
  * @return The top-level GtkWidget (the window).
  */
 GtkWidget *ui_create_window(app_context_t *ctx);
-
-void ui_apply_styles();
 
 #endif //CLUELESS_TASK_MGR_UI_H

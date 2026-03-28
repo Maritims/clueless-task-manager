@@ -3,16 +3,19 @@
 //
 
 #include "ui.h"
+#include "callbacks.h"
+#include "style.h"
 
 #include <gtk/gtk.h>
 
-#include "callbacks.h"
+#include "tabs/performance.h"
 
 static GtkWidget *create_root_window(app_context_t *ctx) {
     ctx->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(ctx->window), "Clueless Task Manager");
-    gtk_window_set_default_size(GTK_WINDOW(ctx->window), 300, 200);
+    gtk_window_set_default_size(GTK_WINDOW(ctx->window), 640, 480);
     gtk_container_set_border_width(GTK_CONTAINER(ctx->window), 10);
+    gtk_window_set_decorated(GTK_WINDOW(ctx->window), FALSE);
     return ctx->window;
 }
 
@@ -41,6 +44,9 @@ static GtkWidget *create_memory_section(app_context_t *ctx, GtkWidget *vbox) {
 static GtkWidget *create_graph_section(app_context_t *ctx, GtkWidget *vbox) {
     ctx->drawing_area = gtk_drawing_area_new();
     gtk_widget_set_size_request(ctx->drawing_area, -1, 100);
+
+    style_add_class(ctx->drawing_area, "sunken");
+
     gtk_box_pack_start(GTK_BOX(vbox), ctx->drawing_area, TRUE, TRUE, 0);
     g_signal_connect(ctx->drawing_area, "draw", G_CALLBACK(on_draw), ctx);
     return vbox;
@@ -48,29 +54,18 @@ static GtkWidget *create_graph_section(app_context_t *ctx, GtkWidget *vbox) {
 
 GtkWidget *ui_create_window(app_context_t *ctx) {
     create_root_window(ctx);
+    GtkWidget *main_container = create_layout(ctx);
 
-    GtkWidget *vbox = create_layout(ctx);
+    // Configure notebook
+    ctx->notebook = gtk_notebook_new();
+    gtk_box_pack_start(GTK_BOX(main_container), ctx->notebook, TRUE, TRUE, 0);
 
-    create_cpu_section(ctx, vbox);
-    create_memory_section(ctx, vbox);
-    create_graph_section(ctx, vbox);
+    // Add Performance tab
+    GtkWidget *performance_tab = performance_tab_create(ctx);
+    gtk_notebook_append_page(GTK_NOTEBOOK(ctx->notebook), performance_tab, gtk_label_new("Performance"));
+
+    // Add Processes tab
+    gtk_notebook_append_page(GTK_NOTEBOOK(ctx->notebook), gtk_label_new("Processes"), NULL);
 
     return ctx->window;
-}
-
-void ui_apply_styles() {
-    GtkCssProvider *provider = gtk_css_provider_new();
-    const char *css =
-        "window { background-color: #008080; }" /* Classic Teal */
-        "label { color: white; font-family: 'MS Sans Serif', Arial; font-weight: bold; }"
-        "progressbar trough { background-color: #808080; border: 2px solid; border-color: #404040 #ffffff #ffffff #404040; }"
-        "progressbar progress { background-color: #000080; border-radius: 0; }"; /* Navy Blue progress */
-
-    gtk_css_provider_load_from_data(provider, css, -1, NULL);
-    gtk_style_context_add_provider_for_screen(
-        gdk_screen_get_default(),
-        GTK_STYLE_PROVIDER(provider),
-        GTK_STYLE_PROVIDER_PRIORITY_APPLICATION
-    );
-    g_object_unref(provider);
 }

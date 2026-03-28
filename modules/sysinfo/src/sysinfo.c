@@ -2,10 +2,12 @@
 // Created by martin on 26.03.2026.
 //
 
-#include "sys_stats.h"
-
 #include <stdio.h>
 #include <time.h>
+
+#include "cpu.h"
+#include "memory.h"
+#include "sysinfo.h"
 
 /**
  * Utility function for converting a value in kB to another unit.
@@ -34,29 +36,29 @@ static double convert_unit(const unsigned long kb_val, const data_unit_t unit, c
     }
 }
 
-stat_result_t sys_stats_fetch_all(sys_stats_t *stats) {
-    if (!stats) {
+stat_result_t sys_stats_fetch_all(sysinfo_t *sysinfo) {
+    if (!sysinfo) {
         return STAT_ERR_OPEN;
     }
 
-    stat_result_t memory_result = memory_fetch_stats(&stats->memory);
+    stat_result_t memory_result = memory_fetch_stats(&sysinfo->memory);
     if (memory_result != STAT_SUCCESS) {
         fprintf(stderr, "Failed to fetch memory stats\n");
         return memory_result;
     }
 
-    stat_result_t cpu_result = cpu_fetch_stats(&stats->cpu);
+    stat_result_t cpu_result = cpu_fetch_stats(&sysinfo->cpu);
     if (cpu_result != STAT_SUCCESS) {
         fprintf(stderr, "Failed to fetch CPU stats\n");
         return cpu_result;
     }
 
-    stats->timestamp = time(NULL);
+    sysinfo->timestamp = time(NULL);
 
     return STAT_SUCCESS;
 }
 
-void sys_stats_print(const sys_stats_t *stats, const double cpu_load, data_unit_t unit) {
+void sys_stats_print(const sysinfo_t *stats, const double cpu_load, data_unit_t unit) {
     if (!stats) {
         fprintf(stderr, "Invalid argument: NULL\n");
         return;

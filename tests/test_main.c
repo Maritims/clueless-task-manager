@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "cpu.h"
+#include "../modules/sysinfo/include/cpu.h"
 #include "memory.h"
 
 #define ASSERT_TEST(cond, message) \
