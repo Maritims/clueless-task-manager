@@ -4,13 +4,13 @@
 
 #include <assert.h>
 
-#include "memory.h"
+#include "ctm_memory.h"
 
 int main(void) {
-    memory_stats_t      stats  = {0};
-    const stat_result_t result = memory_fetch_stats(&stats);
+    CtmMemoryStats      stats  = {0};
+    const int result = memory_fetch_stats(&stats);
 
-    assert(result == STAT_SUCCESS);
+    assert(result == 0);
     assert(stats.total > 0);
     assert(stats.available > 0);
     assert(stats.used_percent > 0);

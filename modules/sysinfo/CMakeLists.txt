@@ -2,10 +2,10 @@
 # Source files
 # -----------------------------------------------
 add_library(sysinfo STATIC
-        src/cpu.c
-        src/memory.c
-        src/process.c
-        src/sysinfo.c
+        src/ctm_cpu.c
+        src/ctm_memory.c
+        src/ctm_process.c
+        src/ctm_sysinfo.c
 )
 
 # -----------------------------------------------
@@ -13,8 +13,7 @@ add_library(sysinfo STATIC
 # -----------------------------------------------
 target_include_directories(sysinfo PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-add_executable(test_cpu tests/test_cpu.c
-        tests/test_sysinfo.c)
+add_executable(test_cpu tests/test_cpu.c)
 target_link_libraries(test_cpu sysinfo)
 add_test(NAME CpuTest COMMAND test_cpu)
 

@@ -5,11 +5,13 @@
 #include <stdio.h>
 #include <time.h>
 
-#include "cpu.h"
-#include "memory.h"
-#include "sysinfo.h"
+#include "ctm_cpu.h"
+#include "ctm_memory.h"
+#include "ctm_sysinfo.h"
 
 #include <stdlib.h>
+#include <string.h>
+#include <asm-generic/errno-base.h>
 
 /**
  * Utility function for converting a value in kB to another unit.
@@ -18,7 +20,7 @@
  * @param suffix  The suffix to use
  * @return The converted value.
  */
-static double convert_unit(const unsigned long kb_val, const data_unit_t unit, const char **suffix) {
+static double convert_unit(const unsigned long kb_val, const CtmDataUnit unit, const char **suffix) {
     switch (unit) {
         case UNIT_KB:
             *suffix = "kB";
@@ -38,42 +40,49 @@ static double convert_unit(const unsigned long kb_val, const data_unit_t unit, c
     }
 }
 
-stat_result_t sysinfo_fetch(sysinfo_t *sysinfo) {
-    if (!sysinfo) {
-        return STAT_ERR_OPEN;
+int ctm_sysinfo_fetch(CtmSysStats *out_stats) {
+    if (!out_stats) {
+        fprintf(stderr, "ctm_sysinfo_fetch: Invalid argument: NULL\n");
+        return EINVAL;
     }
 
-    const stat_result_t cpu_result = cpu_fetch_stats(&sysinfo->cpu);
-    if (cpu_result != STAT_SUCCESS) {
+    const int cpu_result = ctm_cpu_fetch_stats(&out_stats->cpu);
+    if (cpu_result != 0) {
         fprintf(stderr, "Failed to fetch CPU stats\n");
         return cpu_result;
     }
 
-    const stat_result_t memory_result = memory_fetch_stats(&sysinfo->memory);
-    if (memory_result != STAT_SUCCESS) {
-        fprintf(stderr, "Failed to fetch memory stats\n");
+    const int memory_result = memory_fetch_stats(&out_stats->memory);
+    if (memory_result != 0) {
+        fprintf(stderr, "Failed to fetch memory stats: %s\n", strerror(memory_result));
         return memory_result;
     }
 
-    const stat_result_t process_result = process_fetch_all(&sysinfo->processes);
-    if (process_result != STAT_SUCCESS) {
-        fprintf(stderr, "Failed to fetch process stats\n");
+    const int process_result = ctm_process_fetch_all(&out_stats->processes, 1);
+    if (process_result != 0) {
+        fprintf(stderr, "Failed to fetch process stats: %s\n", strerror(process_result));
         return process_result;
     }
 
-    sysinfo->timestamp = time(NULL);
+    out_stats->timestamp = time(NULL);
 
-    return STAT_SUCCESS;
+    return 0;
 }
 
-void sysinfo_free(sysinfo_t *sysinfo) {
+int ctm_sysinfo_free(CtmSysStats *sysinfo) {
+    if (!sysinfo) {
+        fprintf(stderr, "ctm_sysinfo_free: Invalid argument: NULL\n");
+        return EINVAL;
+    }
+
     free(sysinfo);
+    return 0;
 }
 
-void sys_stats_print(const sysinfo_t *stats, const double cpu_load, data_unit_t unit) {
+int ctm_sys_stats_print(const CtmSysStats *stats, const double cpu_load, CtmDataUnit unit) {
     if (!stats) {
         fprintf(stderr, "Invalid argument: NULL\n");
-        return;
+        return EINVAL;
     }
 
     const char *unit_str;
@@ -102,4 +111,6 @@ void sys_stats_print(const sysinfo_t *stats, const double cpu_load, data_unit_t 
     printf("]\n");
 
     printf("--------------------------------------\n");
+
+    return 0;
 }

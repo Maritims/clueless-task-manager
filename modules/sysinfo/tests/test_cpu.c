@@ -5,13 +5,13 @@
 #include <assert.h>
 #include <stdio.h>
 
-#include "cpu.h"
+#include "ctm_cpu.h"
 
 int main(void) {
-    cpu_stats_t stats = {0};
-    const stat_result_t result = cpu_fetch_stats(&stats);
+    CtmCpuStats stats = {0};
+    const int result = ctm_cpu_fetch_stats(&stats);
 
-    assert(result == STAT_SUCCESS);
+    assert(result == 0);
     assert(stats.user > 0);
     assert(stats.nice > 0);
     assert(stats.system > 0);

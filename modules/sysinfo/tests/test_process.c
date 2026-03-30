@@ -8,14 +8,14 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "process.h"
+#include "ctm_process.h"
 
 int main(void) {
-    process_array_t     array  = {0};
+    CtmProcessArray     array  = {0};
     const pid_t         pid    = getpid();
-    const stat_result_t result = process_fetch_all(&array);
+    const int result = ctm_process_fetch_all(&array, 0);
 
-    assert(result == STAT_SUCCESS);
+    assert(result == 0);
     assert(array.capacity > 0);
     assert(array.count > 0);
 
@@ -24,16 +24,17 @@ int main(void) {
         if (array.elements[i].pid == pid) {
             found_self = 1;
 
-            printf("Found self! Name: %s, RSS: %lu KB\n", array.elements[i].name, array.elements[i].rss_kb);
+            printf("Found self! Name: %s, RSS: %lu KB, UID: %d, Username: %s\n", array.elements[i].name, array.elements[i].rss_kb, array.elements[i].uid, array.elements[i].username);
 
             assert(strlen(array.elements[i].name) > 0);
             assert(array.elements[i].rss_kb > 0);
+            assert(array.elements[i].uid == getuid());
             break;
         }
     }
 
     assert(found_self && "The parser failed to find the current running process in /proc");
-    process_array_free(&array);
+    ctm_process_array_destroy(&array);
 
     return 0;
 }

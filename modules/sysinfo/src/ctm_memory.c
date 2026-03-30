@@ -2,22 +2,22 @@
 // Created by martin on 26.03.2026.
 //
 
-#include "memory.h"
+#include "ctm_memory.h"
 
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-stat_result_t memory_fetch_stats(memory_stats_t *stats) {
-    if (stats == NULL) {
-        return STAT_ERR_OPEN;
+int memory_fetch_stats(CtmMemoryStats *out_stats) {
+    if (out_stats == NULL) {
+        return EINVAL;
     }
 
     FILE *fp = fopen("/proc/meminfo", "r");
     if (!fp) {
         fprintf(stderr, "OS error: %s\n", strerror(errno));
-        return STAT_ERR_OPEN;
+        return errno;
     }
 
     char line[256];
@@ -29,46 +29,42 @@ stat_result_t memory_fetch_stats(memory_stats_t *stats) {
         if (strncmp(line, "MemAvailable:", 13) == 0) {
             char *end = NULL;
             errno = 0;
-            stats->available = strtoul(line + 13, &end, 10);
+            out_stats->available = strtoul(line + 13, &end, 10);
             if (errno == 0 && end != line + 13) read_available = 1;
         }
         if (strncmp(line, "MemFree:", 8) == 0) {
             char *end = NULL;
             errno = 0;
-            stats->free = strtoul(line + 8, &end, 10);
+            out_stats->free = strtoul(line + 8, &end, 10);
             if (errno == 0 && end != line + 8) read_free = 1;
         }
         if (strncmp(line, "MemTotal:", 9) == 0) {
             char *end = NULL;
             errno = 0;
-            stats->total = strtoul(line + 9, &end, 10);
+            out_stats->total = strtoul(line + 9, &end, 10);
             if (errno == 0 && end != line + 9) read_total = 1;
         }
     }
 
     if (!read_available || !read_free || !read_total) {
-        return STAT_ERR_PARSE;
+        return EIO;
     }
 
-    memory_calculate_load(stats);
+    memory_calculate_load(out_stats);
 
-    return STAT_SUCCESS;
+    return 0;
 }
 
-void memory_calculate_load(memory_stats_t *stats) {
-    if (stats == NULL) {
+int memory_calculate_load(CtmMemoryStats *out_stats) {
+    if (out_stats == NULL) {
         fprintf(stderr, "Invalid argument: NULL\n");
-        return;
+        return EINVAL;
     }
 
-    const unsigned long total = stats->total;
-    const unsigned long available = stats->available;
+    const unsigned long total = out_stats->total;
+    const unsigned long available = out_stats->available;
 
-    if (total == 0) {
-        stats->used_percent = 0.0;
-        return;
-    }
+    out_stats->used_percent = total == 0 ? 0.0 : (total - available) / (double) total * 100.0;
 
-    const double usage_percent = ((total - available) / (double) total) * 100.0;
-    stats->used_percent = usage_percent;
+    return 0;
 }

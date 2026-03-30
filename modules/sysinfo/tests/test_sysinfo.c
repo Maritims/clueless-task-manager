@@ -4,13 +4,13 @@
 
 #include <assert.h>
 
-#include "sysinfo.h"
+#include "ctm_sysinfo.h"
 
 int main(void) {
-    sysinfo_t           sysinfo = {0};
-    const stat_result_t result  = sysinfo_fetch(&sysinfo);
+    CtmSysStats sysinfo = {0};
+    const int   result  = ctm_sysinfo_fetch(&sysinfo);
 
-    assert(result == STAT_SUCCESS);
+    assert(result == 0);
     assert(sysinfo.timestamp > 0);
     assert(sysinfo.cpu.total_sum > 0);
     assert(sysinfo.memory.total > 0);

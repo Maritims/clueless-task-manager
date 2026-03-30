@@ -4,19 +4,13 @@ project(clueless_task_mgr
         LANGUAGES   C
 )
 
-# -----------------------------------------------
-# Compiler settings
-# -----------------------------------------------
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
-# Output directories
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 
-
-# Enable warnings and treat them as errors.
 add_compile_options(
         -Wall                   # Enable most common warnings.
         -Wextra                 # Enable less common warnings not included by -Wall.
@@ -24,43 +18,27 @@ add_compile_options(
         -pedantic               # Enforce strict ISO C90 compliance.
 )
 
-# -----------------------------------------------
-# Include directories
-# -----------------------------------------------
-include_directories(${CMAKE_SOURCE_DIR}/include ${GTK3_INCLUDE_DIRS})
-
-# -----------------------------------------------
-# Modules
-# -----------------------------------------------
-add_subdirectory(modules/sysinfo)
-
-# -----------------------------------------------
-# Source files
-# -----------------------------------------------
-file(GLOB_RECURSE APP_SOURCES
-        "src/callbacks.c"
-        "src/main.c"
-        "src/style.c"
-        "src/ui.c",
-        "src/tabs/process_tab.c"
-        "src/tabs/performance_tab.c"
-)
-
-# -----------------------------------------------
-# Dependencies
-# -----------------------------------------------
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GTK3 REQUIRED gtk+-3.0)
 
-# -----------------------------------------------
-# Build application
-# -----------------------------------------------
-add_executable(clueless-task-mgr ${APP_SOURCES}
-        include/tabs/process_tab.h
-        src/tabs/process_tab.c)
+add_subdirectory(modules/sysinfo)
 
-# Link libraries
+file(GLOB_RECURSE APP_SOURCES
+        "src/ctm_process_page.c"
+        "src/main.c"
+)
+
+add_executable(clueless-task-mgr ${APP_SOURCES}
+        include/ctm_common.h)
+
+target_include_directories(clueless-task-mgr PRIVATE
+        ${CMAKE_SOURCE_DIR}/include
+        ${GTK3_INCLUDE_DIRS}
+)
+
+target_compile_options(clueless-task-mgr PRIVATE ${GTK3_CFLAGS_OTHER})
+
+target_link_directories(clueless-task-mgr PRIVATE ${GTK3_LIBRARY_DIRS})
 target_link_libraries(clueless-task-mgr PRIVATE sysinfo ${GTK3_LIBRARIES})
 
-# Enable testing
 enable_testing()

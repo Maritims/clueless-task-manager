@@ -2,9 +2,8 @@
 // Created by martin on 28.03.2026.
 //
 
-#ifndef CLUELESS_TASK_MGR_CPU_H
-#define CLUELESS_TASK_MGR_CPU_H
-#include "common.h"
+#ifndef CTM_CPU_H
+#define CTM_CPU_H
 
 typedef struct {
     unsigned long user;
@@ -15,10 +14,10 @@ typedef struct {
     unsigned long irq;
     unsigned long softirq;
     unsigned long total_sum; // calculated
-} cpu_stats_t;
+} CtmCpuStats;
 
-stat_result_t cpu_fetch_stats(cpu_stats_t *stats);
+int ctm_cpu_fetch_stats(CtmCpuStats *out_stats);
 
-double cpu_calculate_load(const cpu_stats_t *prev, const cpu_stats_t *curr);
+int ctm_cpu_calculate_load(const CtmCpuStats *prev, const CtmCpuStats *curr, double *out_load);
 
-#endif //CLUELESS_TASK_MGR_CPU_H
+#endif //CTM_CPU_H
