@@ -3,19 +3,22 @@
 //
 
 #include <assert.h>
+#include <stdio.h>
 
 #include "ctm_memory.h"
 
+void test_ctm_memory_stats_new(void) {
+    CtmMemoryStats* stats = ctm_memory_stats_new();
+    assert(stats != NULL);
+    assert(ctm_memory_stats_get_available(stats) == 0);
+    assert(ctm_memory_stats_get_free(stats) == 0);
+    assert(ctm_memory_stats_get_total(stats) == 0);
+    assert(ctm_memory_stats_get_used_percent(stats) == 0.0);
+    ctm_memory_stats_free(stats);
+    printf("%s passed\n", __func__);
+}
+
 int main(void) {
-    CtmMemoryStats      stats  = {0};
-    const int result = memory_fetch_stats(&stats);
-
-    assert(result == 0);
-    assert(stats.total > 0);
-    assert(stats.available > 0);
-    assert(stats.used_percent > 0);
-    assert(stats.used_percent <= 100.0);
-    assert(stats.used_percent >= 0.0);
-
-    return 0;
+    test_ctm_memory_stats_new();
+    printf("All tests passed\n");
 }

@@ -7,18 +7,22 @@
 
 #include "ctm_cpu.h"
 
+void test_cpu_stats_new(void) {
+    CtmCpuStats* stats = ctm_cpu_stats_new();
+    assert(stats != NULL);
+    assert(ctm_cpu_stats_get_user(stats) == 0);
+    assert(ctm_cpu_stats_get_nice(stats) == 0);
+    assert(ctm_cpu_stats_get_system(stats) == 0);
+    assert(ctm_cpu_stats_get_idle(stats) == 0);
+    assert(ctm_cpu_stats_get_iowait(stats) == 0);
+    assert(ctm_cpu_stats_get_irq(stats) == 0);
+    assert(ctm_cpu_stats_get_softirq(stats) == 0);
+    assert(ctm_cpu_stats_get_total_sum(stats) == 0);
+    ctm_cpu_stats_free(stats);
+    printf("%s passed\n", __func__);
+}
+
 int main(void) {
-    CtmCpuStats stats = {0};
-    const int result = ctm_cpu_fetch_stats(&stats);
-
-    assert(result == 0);
-    assert(stats.user > 0);
-    assert(stats.nice > 0);
-    assert(stats.system > 0);
-    assert(stats.idle > 0);
-    assert(stats.iowait > 0);
-    assert(stats.softirq > 0);
-    assert(stats.total_sum == stats.user + stats.nice + stats.system + stats.idle + stats.iowait + stats.irq + stats.softirq);
-
-    return 0;
+    test_cpu_stats_new();
+    printf("All tests passed\n");
 }

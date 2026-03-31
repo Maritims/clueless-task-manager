@@ -5,32 +5,32 @@
 #ifndef CLUELESS_TASK_MGR_PROCESS_H
 #define CLUELESS_TASK_MGR_PROCESS_H
 #include <stddef.h>
+#include <time.h>
 
-typedef struct {
-    unsigned int  pid;
-    unsigned int  uid;
-    char          username[256];
-    char          state;
-    char          name[256];
-    unsigned long utime;  // user time ticks
-    unsigned long stime;  // kernel time ticks
-    unsigned long rss_kb; // resident set size, the portion of memory (measured in kilobytes) occupied by a process that is held in RAM.
-} CtmProcess;
+typedef struct CtmProcess      CtmProcess;
+typedef struct CtmProcessArray CtmProcessArray;
 
-typedef struct {
-    CtmProcess *elements;
-    size_t      count;
-    size_t      capacity;
-} CtmProcessArray;
+// Constructor and destructor.
+CtmProcessArray* ctm_process_array_new(void);
+void             ctm_process_array_free(CtmProcessArray* array);
+CtmProcess*      ctm_process_new(pid_t pid, unsigned int uid, const char* name, const char* state, const char* username, unsigned long utime, unsigned long stime, unsigned long rss_kb);
+void             ctm_process_free(CtmProcess* process);
 
-int ctm_process_array_init(CtmProcessArray *array);
+// Factory functions.
+CtmProcessArray* ctm_processes_from_kernel(int include_all_users);
+CtmProcess*      ctm_process_from_kernel(pid_t pid, int include_all_users);
 
-int ctm_process_array_destroy(CtmProcessArray *array);
+// Accessors.
+size_t            ctm_process_array_get_count(const CtmProcessArray* array);
+size_t            ctm_process_array_get_capacity(const CtmProcessArray* array);
+const CtmProcess* ctm_process_array_get_element(const CtmProcessArray* array, size_t index);
+const CtmProcess* ctm_process_array_get_elements(const CtmProcessArray* array);
+pid_t             ctm_process_get_pid(const CtmProcess* process);
+const char*       ctm_process_get_name(const CtmProcess* process);
+const char*       ctm_process_get_state(const CtmProcess* process);
+const char*       ctm_process_get_username(const CtmProcess* process);
 
-int process_array_push(CtmProcessArray *array, const CtmProcess *item);
-
-int ctm_process_fetch_all(CtmProcessArray *array, int include_all_users);
-
-int ctm_process_translate_state(const CtmProcess *process, char *out_state);
+// Logic.
+int ctm_process_array_push(CtmProcessArray* array, const CtmProcess* item);
 
 #endif //CLUELESS_TASK_MGR_PROCESS_H

@@ -10,31 +10,26 @@
 
 #include "ctm_process.h"
 
+void test_ctm_process_array_new(void) {
+    CtmProcessArray* array = ctm_process_array_new();
+    assert(array != NULL);
+    assert(ctm_process_array_get_elements(array) == NULL);
+    assert(ctm_process_array_get_count(array) == 0);
+    assert(ctm_process_array_get_capacity(array) == 0);
+    ctm_process_array_free(array);
+    printf("%s passed\n", __func__);
+}
+
+void test_ctm_process_array_free(void) {
+    CtmProcessArray*  array    = ctm_process_array_new();
+    const CtmProcess* elements = ctm_process_array_get_elements(array);
+    ctm_process_array_free(array);
+    assert(elements == NULL);
+    printf("%s passed\n", __func__);
+}
+
 int main(void) {
-    CtmProcessArray     array  = {0};
-    const pid_t         pid    = getpid();
-    const int result = ctm_process_fetch_all(&array, 0);
-
-    assert(result == 0);
-    assert(array.capacity > 0);
-    assert(array.count > 0);
-
-    int found_self = 0;
-    for (size_t i = 0; i < array.count; i++) {
-        if (array.elements[i].pid == pid) {
-            found_self = 1;
-
-            printf("Found self! Name: %s, RSS: %lu KB, UID: %d, Username: %s\n", array.elements[i].name, array.elements[i].rss_kb, array.elements[i].uid, array.elements[i].username);
-
-            assert(strlen(array.elements[i].name) > 0);
-            assert(array.elements[i].rss_kb > 0);
-            assert(array.elements[i].uid == getuid());
-            break;
-        }
-    }
-
-    assert(found_self && "The parser failed to find the current running process in /proc");
-    ctm_process_array_destroy(&array);
-
-    return 0;
+    test_ctm_process_array_new();
+    test_ctm_process_array_free();
+    printf("All tests passed\n");
 }

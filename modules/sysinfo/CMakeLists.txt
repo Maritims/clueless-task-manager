@@ -5,7 +5,7 @@ add_library(sysinfo STATIC
         src/ctm_cpu.c
         src/ctm_memory.c
         src/ctm_process.c
-        src/ctm_sysinfo.c
+        src/ctm_system.c
 )
 
 # -----------------------------------------------
@@ -25,6 +25,6 @@ add_executable(test_process tests/test_process.c)
 target_link_libraries(test_process sysinfo)
 add_test(NAME ProcessTest COMMAND test_process)
 
-add_executable(test_sysinfo tests/test_sysinfo.c)
-target_link_libraries(test_sysinfo sysinfo)
-add_test(NAME SysinfoTest COMMAND test_sysinfo)
+add_executable(test_system tests/test_system.c)
+target_link_libraries(test_system sysinfo)
+add_test(NAME SystemTest COMMAND test_system)

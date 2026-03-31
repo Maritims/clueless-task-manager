@@ -12,15 +12,19 @@ typedef enum {
     UNIT_TB = 3
 } CtmDataUnit;
 
-typedef struct {
-    unsigned long available;
-    unsigned long free;
-    unsigned long total;
-    double        used_percent; // calculated
-} CtmMemoryStats;
+typedef struct CtmMemoryStats CtmMemoryStats;
 
-int memory_fetch_stats(CtmMemoryStats *out_stats);
+// Constructor and destructor.
+CtmMemoryStats* ctm_memory_stats_new(void);
+void            ctm_memory_stats_free(CtmMemoryStats* memory_stats);
 
-int memory_calculate_load(CtmMemoryStats *out_stats);
+// Factory functions.
+CtmMemoryStats* ctm_memory_stats_from_kernel(void);
+
+// Accessors.
+unsigned long ctm_memory_stats_get_available(CtmMemoryStats* memory_stats);
+unsigned long ctm_memory_stats_get_free(CtmMemoryStats* memory_stats);
+unsigned long ctm_memory_stats_get_total(CtmMemoryStats* memory_stats);
+double        ctm_memory_stats_get_used_percent(CtmMemoryStats* memory_stats);
 
 #endif //CTM_MEMORY_H
