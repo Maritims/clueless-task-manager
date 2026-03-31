@@ -13,7 +13,7 @@ typedef struct CtmProcessArray CtmProcessArray;
 // Constructor and destructor.
 CtmProcessArray* ctm_process_array_new(void);
 void             ctm_process_array_free(CtmProcessArray* array);
-CtmProcess*      ctm_process_new(pid_t pid, unsigned int uid, const char* name, const char* state, const char* username, unsigned long utime, unsigned long stime, unsigned long rss_kb);
+CtmProcess*      ctm_process_new(pid_t pid, unsigned int uid, const char* name, const char* state, const char* username, long long utime, long long stime, unsigned long rss_kb);
 void             ctm_process_free(CtmProcess* process);
 
 // Factory functions.
@@ -29,6 +29,9 @@ pid_t             ctm_process_get_pid(const CtmProcess* process);
 const char*       ctm_process_get_name(const CtmProcess* process);
 const char*       ctm_process_get_state(const CtmProcess* process);
 const char*       ctm_process_get_username(const CtmProcess* process);
+long long         ctm_process_get_user_time(const CtmProcess* process);
+long long         ctm_process_get_system_time(const CtmProcess* process);
+long long         ctm_process_get_total_time(const CtmProcess* process);
 
 // Logic.
 int ctm_process_array_push(CtmProcessArray* array, const CtmProcess* item);

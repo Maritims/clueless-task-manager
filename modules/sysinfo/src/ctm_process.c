@@ -23,9 +23,11 @@ struct CtmProcess {
     char          username[CTM_PROCESS_USERNAME_LENGTH];
     char          state;
     char          name[CTM_PROCESS_NAME_LENGTH];
-    unsigned long utime;  // user time ticks
-    unsigned long stime;  // kernel time ticks
+    long long     utime;  // user time ticks
+    long long     stime;  // kernel time ticks
     unsigned long rss_kb; // resident set size, the portion of memory (measured in kilobytes) occupied by a process that is held in RAM.
+
+    long long total_time; // calculated
 };
 
 struct CtmProcessArray {
@@ -70,7 +72,7 @@ void ctm_process_array_free(CtmProcessArray* array) {
     }
 }
 
-CtmProcess* ctm_process_new(const pid_t pid, const unsigned int uid, const char* name, const char* state, const char* username, const unsigned long utime, const unsigned long stime, const unsigned long rss_kb) {
+CtmProcess* ctm_process_new(const pid_t pid, const unsigned int uid, const char* name, const char* state, const char* username, const long long utime, const long long stime, const unsigned long rss_kb) {
     CtmProcess* process = malloc(sizeof(CtmProcess));
     if (!process) {
         fprintf(stderr, "Failed to allocate memory for process: %d\n", errno);
@@ -81,10 +83,11 @@ CtmProcess* ctm_process_new(const pid_t pid, const unsigned int uid, const char*
     process->uid = uid;
     strncpy(process->username, username, sizeof(process->username));
     strncpy(process->name, name, sizeof(process->name));
-    process->state  = state[0];
-    process->utime  = utime;
-    process->stime  = stime;
-    process->rss_kb = rss_kb;
+    process->state      = state[0];
+    process->utime      = utime;
+    process->stime      = stime;
+    process->rss_kb     = rss_kb;
+    process->total_time = utime + stime;
 
     return process;
 }
@@ -264,14 +267,6 @@ const char* ctm_process_get_name(const CtmProcess* process) {
     return process->name;
 }
 
-const char* ctm_process_get_username(const CtmProcess* process) {
-    if (process == NULL) {
-        fprintf(stderr, "ctm_process_get_username: process cannot be NULL\n");
-        return NULL;
-    }
-    return process->username;
-}
-
 const char* ctm_process_get_state(const CtmProcess* process) {
     if (process == NULL) {
         fprintf(stderr, "ctm_process_get_state: process cannot be NULL\n");
@@ -308,6 +303,38 @@ const char* ctm_process_get_state(const CtmProcess* process) {
             fprintf(stderr, "ctm_process_translate_state: Unknown state for pid %d: %c\n", process->pid, process->state);
             return NULL;
     }
+}
+
+const char* ctm_process_get_username(const CtmProcess* process) {
+    if (process == NULL) {
+        fprintf(stderr, "ctm_process_get_username: process cannot be NULL\n");
+        return NULL;
+    }
+    return process->username;
+}
+
+long long ctm_process_get_user_time(const CtmProcess* process) {
+    if (process == NULL) {
+        fprintf(stderr, "ctm_process_get_utime: process cannot be NULL\n");
+        return 0;
+    }
+    return process->utime;
+}
+
+long long ctm_process_get_system_time(const CtmProcess* process) {
+    if (process == NULL) {
+        fprintf(stderr, "ctm_process_get_stime: process cannot be NULL\n");
+        return 0;
+    }
+    return process->stime;
+}
+
+long long ctm_process_get_total_time(const CtmProcess* process) {
+    if (process == NULL) {
+        fprintf(stderr, "ctm_process_get_total_time: process cannot be NULL\n");
+        return 0;
+    }
+    return process->total_time;
 }
 
 int ctm_process_array_push(CtmProcessArray* array, const CtmProcess* item) {

@@ -19,4 +19,7 @@ int           ctm_app_context_set_process_view(CtmAppContext* ctx, GtkTreeView* 
 gboolean      ctm_app_context_get_show_processes_from_all_users(const CtmAppContext* ctx);
 void          ctm_app_context_set_show_processes_from_all_users(CtmAppContext* ctx, gboolean value);
 
+// Utilities.
+void ctm_format_duration(long long time_in_ms, char* buffer, size_t buffer_size);
+
 #endif //CLUELESS_TASK_MGR_CTM_COMMON_H

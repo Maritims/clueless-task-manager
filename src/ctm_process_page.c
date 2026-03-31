@@ -6,6 +6,22 @@
 
 #include "ctm_process_page.h"
 
+typedef struct {
+    const char* title;
+    int         column_id;
+    GType       type;
+    gboolean    visible;
+} CtmProcessPageColumn;
+
+static const CtmProcessPageColumn PROCESS_PAGE_COLUMNS[] = {
+    {"PID", CTM_PROCESS_PAGE_PID_COLUMN, G_TYPE_INT, FALSE},
+    {"Task", CTM_PROCESS_PAGE_NAME_COLUMN, G_TYPE_STRING, TRUE},
+    {"State", CTM_PROCESS_PAGE_STATUS_COLUMN, G_TYPE_STRING, TRUE},
+    {"Username", CTM_PROCESS_PAGE_USERNAME_COLUMN, G_TYPE_STRING, TRUE},
+    {"Total Time", CTM_PROCESS_PAGE_TIME_COLUMN, G_TYPE_STRING, TRUE},
+    {"Updated", CTM_PROCESS_PAGE_UPDATED_COLUMN, G_TYPE_BOOLEAN, FALSE}
+};
+
 static int find_pid_in_process_store(const unsigned int target_pid, GtkTreeStore* process_store, GtkTreeIter* iter) {
     if (target_pid == 0) {
         fprintf(stderr, "find_pid_in_process_store: target_pid cannot be 0\n");
@@ -50,16 +66,29 @@ GtkWidget* ctm_process_page_new(CtmAppContext* ctx) {
     }
 
     // Tree view.
-    GtkTreeStore*      store           = gtk_tree_store_new(CTM_PROCESS_PAGE_COLUMNS,G_TYPE_INT, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_BOOLEAN); // PID, Name, State, Updated.
-    GtkWidget*         tree_view       = gtk_tree_view_new_with_model(GTK_TREE_MODEL(store));
-    GtkCellRenderer*   renderer        = gtk_cell_renderer_text_new();
-    GtkTreeViewColumn* name_column     = gtk_tree_view_column_new_with_attributes("Name", renderer, "text", CTM_PROCESS_PAGE_NAME_COLUMN, NULL);
-    GtkTreeViewColumn* state_column    = gtk_tree_view_column_new_with_attributes("State", renderer, "text", CTM_PROCESS_PAGE_STATUS_COLUMN, NULL);
-    GtkTreeViewColumn* username_column = gtk_tree_view_column_new_with_attributes("Username", renderer, "text", CTM_PROCESS_PAGE_USERNAME_COLUMN, NULL);
+    GType types[G_N_ELEMENTS(PROCESS_PAGE_COLUMNS)];
+    for (size_t i = 0; i < G_N_ELEMENTS(PROCESS_PAGE_COLUMNS); i++) {
+        types[i] = PROCESS_PAGE_COLUMNS[i].type;
+    }
 
-    gtk_tree_view_append_column(GTK_TREE_VIEW(tree_view), name_column);
-    gtk_tree_view_append_column(GTK_TREE_VIEW(tree_view), state_column);
-    gtk_tree_view_append_column(GTK_TREE_VIEW(tree_view), username_column);
+    GtkTreeStore*    store     = gtk_tree_store_newv(G_N_ELEMENTS(PROCESS_PAGE_COLUMNS), types);
+    GtkWidget*       tree_view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(store));
+    GtkCellRenderer* renderer  = gtk_cell_renderer_text_new();
+
+    for (size_t i = 0; i < sizeof(PROCESS_PAGE_COLUMNS) / sizeof(CtmProcessPageColumn); i++) {
+        if (PROCESS_PAGE_COLUMNS[i].visible) {
+            GtkTreeViewColumn* column = gtk_tree_view_column_new_with_attributes(
+                PROCESS_PAGE_COLUMNS[i].title,
+                renderer,
+                "text",
+                PROCESS_PAGE_COLUMNS[i].column_id,
+                NULL
+            );
+            gtk_tree_view_column_set_resizable(column, TRUE);
+            gtk_tree_view_column_set_sort_column_id(column, PROCESS_PAGE_COLUMNS[i].column_id);
+            gtk_tree_view_append_column(GTK_TREE_VIEW(tree_view), column);
+        }
+    }
 
     // Scrolled window.
     GtkWidget* scrolled_window = gtk_scrolled_window_new(NULL, NULL);
@@ -95,6 +124,29 @@ GtkWidget* ctm_process_page_new(CtmAppContext* ctx) {
     return layout;
 }
 
+static void set_row_from_process(GtkTreeStore* store, GtkTreeIter* iter, const CtmProcess* process) {
+    if (store == NULL) {
+        fprintf(stderr, "set_row_from_process: store cannot be NULL\n");
+        return;
+    }
+    if (process == NULL) {
+        fprintf(stderr, "set_row_from_process: process cannot be NULL\n");
+        return;
+    }
+
+    char duration_buffer[32];
+    ctm_format_duration(ctm_process_get_total_time(process), duration_buffer, sizeof(duration_buffer));
+
+    gtk_tree_store_set(store, iter,
+                       CTM_PROCESS_PAGE_PID_COLUMN, ctm_process_get_pid(process),
+                       CTM_PROCESS_PAGE_NAME_COLUMN, ctm_process_get_name(process),
+                       CTM_PROCESS_PAGE_STATUS_COLUMN, ctm_process_get_state(process),
+                       CTM_PROCESS_PAGE_USERNAME_COLUMN, ctm_process_get_username(process),
+                       CTM_PROCESS_PAGE_TIME_COLUMN, duration_buffer,
+                       CTM_PROCESS_PAGE_UPDATED_COLUMN, TRUE,
+                       -1);
+}
+
 int ctm_process_page_refresh(const CtmAppContext* ctx) {
     CtmProcessArray* processes = ctm_processes_from_kernel(ctm_app_context_get_show_processes_from_all_users(ctx));
     if (processes == NULL) {
@@ -125,35 +177,17 @@ int ctm_process_page_refresh(const CtmAppContext* ctx) {
             continue;
         }
 
-        GtkTreeIter       target_iter;
-
-        const pid_t process_pid = ctm_process_get_pid(process);
-        const char* process_name = ctm_process_get_name(process);
-        const char* process_state = ctm_process_get_state(process);
-        const char* process_username = ctm_process_get_username(process);
-
-        // Is the current process PID in the store?
-        const int search_result = find_pid_in_process_store(process_pid, process_store, &target_iter);
+        GtkTreeIter target_iter;
+        const pid_t process_pid   = ctm_process_get_pid(process);
+        const int   search_result = find_pid_in_process_store(process_pid, process_store, &target_iter); // Is the current process PID in the store?
 
         if (search_result == 0) {
             // We found an existing row. Update it.
-            gtk_tree_store_set(process_store, &target_iter,
-                               CTM_PROCESS_PAGE_PID_COLUMN, process_pid,
-                               CTM_PROCESS_PAGE_NAME_COLUMN, process_name,
-                               CTM_PROCESS_PAGE_STATUS_COLUMN, process_state,
-                               CTM_PROCESS_PAGE_USERNAME_COLUMN, process_username,
-                               CTM_PROCESS_PAGE_UPDATED_COLUMN, TRUE,
-                               -1);
+            set_row_from_process(process_store, &target_iter, process);
         } else if (search_result == -1) {
             // This row does not exist. Create it.
             gtk_tree_store_append(process_store, &target_iter, NULL);
-            gtk_tree_store_set(process_store, &target_iter,
-                               CTM_PROCESS_PAGE_PID_COLUMN, process_pid,
-                               CTM_PROCESS_PAGE_NAME_COLUMN, process_name,
-                               CTM_PROCESS_PAGE_STATUS_COLUMN, process_state,
-                               CTM_PROCESS_PAGE_USERNAME_COLUMN, process_username,
-                               CTM_PROCESS_PAGE_UPDATED_COLUMN, TRUE,
-                               -1);
+            set_row_from_process(process_store, &target_iter, process);
         }
     }
 
