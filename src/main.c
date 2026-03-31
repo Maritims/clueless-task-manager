@@ -14,11 +14,11 @@ struct CtmAppContext {
     gboolean     show_processes_from_all_users;
 };
 
-CtmAppContext *ctm_app_context_create(void) {
+CtmAppContext *ctm_app_context_new(void) {
     return g_new0(CtmAppContext, 1);
 }
 
-void ctm_app_context_destroy(CtmAppContext *ctx) {
+void ctm_app_context_free(CtmAppContext *ctx) {
     if (ctx == NULL) {
         fprintf(stderr, "ctm_app_context_destroy: ctx cannot be NULL\n");
         return;
@@ -108,7 +108,7 @@ static gboolean on_refresh_timeout(gpointer data) {
 static void activate(GtkApplication *app, gpointer user_data) {
     (void) user_data;
 
-    CtmAppContext *app_context = ctm_app_context_create();
+    CtmAppContext *app_context = ctm_app_context_new();
     if (app_context == NULL) {
         fprintf(stderr, "Failed to create app context\n");
         return;
@@ -122,7 +122,7 @@ static void activate(GtkApplication *app, gpointer user_data) {
 
     // Pages.
     GtkWidget *notebook     = gtk_notebook_new();
-    GtkWidget *process_page = ctm_process_page_create(app_context);
+    GtkWidget *process_page = ctm_process_page_new(app_context);
 
     if (process_page == NULL) {
         fprintf(stderr, "Failed to create process page\n");

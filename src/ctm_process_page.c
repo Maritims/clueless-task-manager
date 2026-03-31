@@ -31,7 +31,7 @@ static int find_pid_in_process_store(const unsigned int target_pid, GtkTreeStore
     return -1;
 }
 
-static void ctm_toggle_show_processes_from_all_users(GtkToggleButton* toggle_button, gpointer data) {
+static void toggle_show_processes_from_all_users(GtkToggleButton* toggle_button, gpointer data) {
     (void) toggle_button;
     if (data == NULL) {
         fprintf(stderr, "on_show_processes_from_all_users_toggled: data cannot be NULL\n");
@@ -43,48 +43,7 @@ static void ctm_toggle_show_processes_from_all_users(GtkToggleButton* toggle_but
     ctm_process_page_refresh(ctx);
 }
 
-void ctm_end_task(GtkButton* btn, gpointer data) {
-    (void) btn;
-    if (data == NULL) {
-        fprintf(stderr, "on_end_task_btn_clicked: data cannot be NULL\n");
-        return;
-    }
-
-    CtmAppContext* ctx          = data;
-    GtkTreeView*   process_view = ctm_app_context_get_process_view(ctx);
-
-    if (process_view == NULL) {
-        fprintf(stderr, "on_end_task_btn_clicked: ctm_app_context_get_process_view returned NULL\n");
-        return;
-    }
-
-    GtkTreeSelection* selection = gtk_tree_view_get_selection(process_view);
-    GtkTreeModel*     model;
-    GtkTreeIter       iter;
-
-    if (gtk_tree_selection_get_selected(selection, &model, &iter)) {
-        gint   pid;
-        gchar* name;
-
-        gtk_tree_model_get(model, &iter, CTM_PROCESS_PAGE_PID_COLUMN, &pid, CTM_PROCESS_PAGE_NAME_COLUMN, &name, -1);
-
-        if (pid > 1) {
-            if (kill(pid, SIGKILL) == 0) {
-                g_print("Killed task %s\n", name);
-            } else {
-                fprintf(stderr, "Failed to kill task %s: %s\n", name, strerror(errno));
-            }
-        } else {
-            fprintf(stderr, "Cannot end task of PID %d\n", pid);
-        }
-
-        g_free(name);
-    } else {
-        g_print("No process selected\n");
-    }
-}
-
-GtkWidget* ctm_process_page_create(CtmAppContext* ctx) {
+GtkWidget* ctm_process_page_new(CtmAppContext* ctx) {
     if (ctx == NULL) {
         fprintf(stderr, "create_process_page: ctx cannot be NULL\n");
         return NULL;
@@ -114,12 +73,12 @@ GtkWidget* ctm_process_page_create(CtmAppContext* ctx) {
     // Checkbox to show processes from all users.
     GtkWidget* show_all_users_checkbox = gtk_check_button_new_with_label("Show processes from all users");
     gtk_box_pack_start(GTK_BOX(footer_box), show_all_users_checkbox, FALSE, FALSE, 0);
-    g_signal_connect(show_all_users_checkbox, "toggled", G_CALLBACK(ctm_toggle_show_processes_from_all_users), ctx);
+    g_signal_connect(show_all_users_checkbox, "toggled", G_CALLBACK(toggle_show_processes_from_all_users), ctx);
 
     // Buttons.
     GtkWidget* btn_box      = gtk_button_box_new(GTK_ORIENTATION_HORIZONTAL);
     GtkWidget* end_task_btn = gtk_button_new_with_label("End Task");
-    g_signal_connect(end_task_btn, "clicked", G_CALLBACK(ctm_end_task), ctx);
+    g_signal_connect(end_task_btn, "clicked", G_CALLBACK(ctm_process_page_end_task), ctx);
     gtk_button_box_set_layout(GTK_BUTTON_BOX(btn_box), GTK_BUTTONBOX_END);
     gtk_container_add(GTK_CONTAINER(btn_box), end_task_btn);
     gtk_box_pack_end(GTK_BOX(footer_box), btn_box, FALSE, FALSE, 0);
@@ -209,4 +168,45 @@ int ctm_process_page_refresh(const CtmAppContext* ctx) {
     }
 
     return 0;
+}
+
+void ctm_process_page_end_task(GtkButton* btn, gpointer data) {
+    (void) btn;
+    if (data == NULL) {
+        fprintf(stderr, "on_end_task_btn_clicked: data cannot be NULL\n");
+        return;
+    }
+
+    CtmAppContext* ctx          = data;
+    GtkTreeView*   process_view = ctm_app_context_get_process_view(ctx);
+
+    if (process_view == NULL) {
+        fprintf(stderr, "on_end_task_btn_clicked: ctm_app_context_get_process_view returned NULL\n");
+        return;
+    }
+
+    GtkTreeSelection* selection = gtk_tree_view_get_selection(process_view);
+    GtkTreeModel*     model;
+    GtkTreeIter       iter;
+
+    if (gtk_tree_selection_get_selected(selection, &model, &iter)) {
+        gint   pid;
+        gchar* name;
+
+        gtk_tree_model_get(model, &iter, CTM_PROCESS_PAGE_PID_COLUMN, &pid, CTM_PROCESS_PAGE_NAME_COLUMN, &name, -1);
+
+        if (pid > 1) {
+            if (kill(pid, SIGKILL) == 0) {
+                g_print("Killed task %s\n", name);
+            } else {
+                fprintf(stderr, "Failed to kill task %s: %s\n", name, strerror(errno));
+            }
+        } else {
+            fprintf(stderr, "Cannot end task of PID %d\n", pid);
+        }
+
+        g_free(name);
+    } else {
+        g_print("No process selected\n");
+    }
 }

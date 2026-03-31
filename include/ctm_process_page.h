@@ -17,10 +17,11 @@ typedef enum {
     CTM_PROCESS_PAGE_COLUMNS          // 5
 } CtmProcessColumn;
 
-GtkWidget *ctm_process_page_create(CtmAppContext *ctx);
+// Constructor.
+GtkWidget* ctm_process_page_new(CtmAppContext* ctx);
 
-int ctm_process_page_refresh(const CtmAppContext *ctx);
-
-void ctm_end_task(GtkButton *btn, gpointer data);
+// Logic.
+int  ctm_process_page_refresh(const CtmAppContext* ctx);
+void ctm_process_page_end_task(GtkButton* btn, gpointer data);
 
 #endif //CTM_PROCESS_TAB_H

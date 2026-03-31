@@ -7,20 +7,16 @@
 
 typedef struct CtmAppContext CtmAppContext;
 
-CtmAppContext *ctm_app_context_create(void);
+// Constructor and destructor.
+CtmAppContext* ctm_app_context_new(void);
+void           ctm_app_context_free(CtmAppContext* ctx);
 
-void ctm_app_context_destroy(CtmAppContext *ctx);
-
-GtkTreeStore *ctm_app_context_get_process_store(const CtmAppContext *ctx);
-
-int ctm_app_context_set_process_store(CtmAppContext *ctx, GtkTreeStore *store);
-
-GtkTreeView *ctm_app_context_get_process_view(const CtmAppContext *ctx);
-
-int ctm_app_context_set_process_view(CtmAppContext *ctx, GtkTreeView *view);
-
-gboolean ctm_app_context_get_show_processes_from_all_users(const CtmAppContext *ctx);
-
-void ctm_app_context_set_show_processes_from_all_users(CtmAppContext *ctx, gboolean value);
+// Accessors.
+GtkTreeStore* ctm_app_context_get_process_store(const CtmAppContext* ctx);
+int           ctm_app_context_set_process_store(CtmAppContext* ctx, GtkTreeStore* store);
+GtkTreeView*  ctm_app_context_get_process_view(const CtmAppContext* ctx);
+int           ctm_app_context_set_process_view(CtmAppContext* ctx, GtkTreeView* view);
+gboolean      ctm_app_context_get_show_processes_from_all_users(const CtmAppContext* ctx);
+void          ctm_app_context_set_show_processes_from_all_users(CtmAppContext* ctx, gboolean value);
 
 #endif //CLUELESS_TASK_MGR_CTM_COMMON_H
