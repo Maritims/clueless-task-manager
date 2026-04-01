@@ -7,6 +7,7 @@
 
 #include "ctm_common.h"
 #include "ctm_process_page.h"
+#include "ctm_sound.h"
 
 struct CtmAppContext {
     GtkTreeStore* process_store;
@@ -162,10 +163,15 @@ static void activate(GtkApplication* app, gpointer user_data) {
 }
 
 int main(int argc, char** argv) {
+    ctm_sound_init();
+
     GtkApplication* app = gtk_application_new("no.clueless.task_manager", G_APPLICATION_DEFAULT_FLAGS);
     g_signal_connect(app, "activate", G_CALLBACK(activate), NULL);
+
     int status = g_application_run(G_APPLICATION(app), argc, argv);
+
     g_object_unref(app);
+    ctm_sound_deinit();
 
     return status;
 }

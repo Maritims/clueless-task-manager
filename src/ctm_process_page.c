@@ -61,6 +61,38 @@ static void toggle_show_processes_from_all_users(GtkToggleButton* toggle_button,
     ctm_process_page_refresh(ctx);
 }
 
+static void set_row_from_process(GtkTreeStore* store, GtkTreeIter* iter, const CtmProcess* process) {
+    if (store == NULL) {
+        fprintf(stderr, "set_row_from_process: store cannot be NULL\n");
+        return;
+    }
+    if (process == NULL) {
+        fprintf(stderr, "set_row_from_process: process cannot be NULL\n");
+        return;
+    }
+
+    char duration_buffer[32];
+    ctm_format_duration(ctm_process_get_total_time(process), duration_buffer, sizeof(duration_buffer));
+
+    gtk_tree_store_set(store, iter,
+                       CTM_PROCESS_PAGE_PID_COLUMN, ctm_process_get_pid(process),
+                       CTM_PROCESS_PAGE_NAME_COLUMN, ctm_process_get_name(process),
+                       CTM_PROCESS_PAGE_STATUS_COLUMN, ctm_process_get_state(process),
+                       CTM_PROCESS_PAGE_USERNAME_COLUMN, ctm_process_get_username(process),
+                       CTM_PROCESS_PAGE_TIME_COLUMN, duration_buffer,
+                       CTM_PROCESS_PAGE_UPDATED_COLUMN, TRUE,
+                       -1);
+}
+
+static gboolean on_sound_finished_idle(gpointer data) {
+    ctm_sound_stop(data);
+    return FALSE;
+}
+
+static void sound_finish_bridge(CtmAudioStreamSource* audio_stream_source, void* userdata) {
+    g_idle_add(on_sound_finished_idle, audio_stream_source);
+}
+
 GtkWidget* ctm_process_page_new(CtmAppContext* ctx) {
     if (ctx == NULL) {
         fprintf(stderr, "create_process_page: ctx cannot be NULL\n");
@@ -124,29 +156,6 @@ GtkWidget* ctm_process_page_new(CtmAppContext* ctx) {
     ctm_app_context_set_process_view(ctx, GTK_TREE_VIEW(tree_view));
 
     return layout;
-}
-
-static void set_row_from_process(GtkTreeStore* store, GtkTreeIter* iter, const CtmProcess* process) {
-    if (store == NULL) {
-        fprintf(stderr, "set_row_from_process: store cannot be NULL\n");
-        return;
-    }
-    if (process == NULL) {
-        fprintf(stderr, "set_row_from_process: process cannot be NULL\n");
-        return;
-    }
-
-    char duration_buffer[32];
-    ctm_format_duration(ctm_process_get_total_time(process), duration_buffer, sizeof(duration_buffer));
-
-    gtk_tree_store_set(store, iter,
-                       CTM_PROCESS_PAGE_PID_COLUMN, ctm_process_get_pid(process),
-                       CTM_PROCESS_PAGE_NAME_COLUMN, ctm_process_get_name(process),
-                       CTM_PROCESS_PAGE_STATUS_COLUMN, ctm_process_get_state(process),
-                       CTM_PROCESS_PAGE_USERNAME_COLUMN, ctm_process_get_username(process),
-                       CTM_PROCESS_PAGE_TIME_COLUMN, duration_buffer,
-                       CTM_PROCESS_PAGE_UPDATED_COLUMN, TRUE,
-                       -1);
 }
 
 int ctm_process_page_refresh(const CtmAppContext* ctx) {
@@ -234,7 +243,7 @@ void ctm_process_page_end_task(GtkButton* btn, gpointer data) {
         if (pid > 1) {
             if (kill(pid, SIGKILL) == 0) {
                 g_print("Killed task %s\n", name);
-                //ctm_play_sound("/home/martin/Nedlastinger/Wilhelm Scream Remastered.wav");
+                ctm_sound_play_async("/home/martin/Nedlastinger/Wilhelm Scream Remastered.wav", sound_finish_bridge, NULL);
             } else {
                 fprintf(stderr, "Failed to kill task %s: %s\n", name, strerror(errno));
             }

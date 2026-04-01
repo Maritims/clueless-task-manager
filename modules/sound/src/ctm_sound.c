@@ -2,6 +2,8 @@
 // Created by martin on 01.04.2026.
 //
 
+#include "ctm_sound.h"
+
 #include <math.h>
 #include <sndfile.h>
 #include <stdio.h>
@@ -12,7 +14,7 @@
 
 #define BUFFER_SIZE (128*1024)
 
-typedef struct CtmAudioStreamSource {
+struct CtmAudioStreamSource {
     struct pw_thread_loop* thread_loop; // Manages timing and OS signals.
     struct pw_loop*        loop;
     SNDFILE*               input_snd_file_handle;  // The file to play.
@@ -21,10 +23,14 @@ typedef struct CtmAudioStreamSource {
     int                    eventfd;
     bool                   running;
 
+    CtmSoundCallback on_finished;
+    void*            on_finished_data;
+    bool             file_eof;
+
     // Ring buffer state.
     struct spa_ringbuffer ring;
     int8_t                buffer[BUFFER_SIZE];
-} CtmAudioStreamSource;
+};
 
 static void on_playback_process(void* userdata) {
     CtmAudioStreamSource* audio_stream_source  = userdata;
@@ -71,10 +77,10 @@ static void refill_ringbuffer(void* userdata) {
     CtmAudioStreamSource* audio_stream_source = userdata;
     const int             stride              = sizeof(int16_t) * audio_stream_source->input_snd_file_info.channels;
     int16_t               buffer[4096];
-    uint32_t              index;
-    uint64_t              count;
+    uint32_t              read_index;
+    uint32_t              write_index;
 
-    const int32_t  used_space      = spa_ringbuffer_get_write_index(&audio_stream_source->ring, &index);
+    const int32_t  used_space      = spa_ringbuffer_get_write_index(&audio_stream_source->ring, &read_index);
     const uint32_t available_space = BUFFER_SIZE - used_space;
     sf_count_t     frames_to_read  = sizeof(buffer) / stride;
 
@@ -87,37 +93,85 @@ static void refill_ringbuffer(void* userdata) {
 
         if (frames_read > 0) {
             const uint32_t bytes_to_write = frames_read * stride;
-            spa_ringbuffer_write_data(&audio_stream_source->ring, audio_stream_source->buffer, BUFFER_SIZE, index % BUFFER_SIZE, buffer, bytes_to_write);
-            spa_ringbuffer_write_update(&audio_stream_source->ring, index + bytes_to_write);
+            spa_ringbuffer_write_data(&audio_stream_source->ring, audio_stream_source->buffer, BUFFER_SIZE, read_index % BUFFER_SIZE, buffer, bytes_to_write);
+            spa_ringbuffer_write_update(&audio_stream_source->ring, read_index + bytes_to_write);
         } else {
-            audio_stream_source->running = false;
+            audio_stream_source->file_eof = true;
+        }
+    }
+
+    spa_ringbuffer_get_read_index(&audio_stream_source->ring, &read_index);
+    spa_ringbuffer_get_write_index(&audio_stream_source->ring, &write_index);
+
+    if (audio_stream_source->file_eof && ((read_index >= write_index))) {
+        audio_stream_source->running = false;
+        if (audio_stream_source->on_finished) {
+            audio_stream_source->on_finished(audio_stream_source, audio_stream_source->on_finished_data);
         }
     }
 }
 
-int ctm_play_sound(const char* file) {
-    CtmAudioStreamSource audio_stream_source = {0,};
+static void on_eventfd_signal(void* userdata, int fd, uint32_t mask) {
+    CtmAudioStreamSource* audio_stream_source = userdata;
+    uint64_t              count;
 
+    spa_system_eventfd_read(audio_stream_source->loop->system, fd, &count);
+
+    pw_thread_loop_lock(audio_stream_source->thread_loop);
+    refill_ringbuffer(audio_stream_source);
+    pw_thread_loop_unlock(audio_stream_source->thread_loop);
+}
+
+static bool is_initialized = false;
+
+void ctm_sound_init(void) {
+    if (is_initialized) {
+        return;
+    }
     pw_init(NULL, NULL);
+    is_initialized = true;
+}
 
-    audio_stream_source.input_snd_file_handle = sf_open(file, SFM_READ, &audio_stream_source.input_snd_file_info);
-    if (!audio_stream_source.input_snd_file_handle) {
-        fprintf(stderr, "%s: Failed to open file: %s\n", __func__, sf_strerror(NULL));
-        return -1;
+void ctm_sound_deinit(void) {
+    if (!is_initialized) {
+        return;
+    }
+    pw_deinit();
+    is_initialized = false;
+}
+
+CtmAudioStreamSource* ctm_sound_play_async(const char* file, CtmSoundCallback on_finished, void* user_data) {
+    ctm_sound_init();
+
+    CtmAudioStreamSource* audio_stream_source = malloc(sizeof(CtmAudioStreamSource));
+    if (audio_stream_source == NULL) {
+        fprintf(stderr, "%s: Failed to allocate memory\n", __func__);
+        return NULL;
+    }
+    memset(audio_stream_source, 0, sizeof(CtmAudioStreamSource));
+
+    audio_stream_source->on_finished      = on_finished;
+    audio_stream_source->on_finished_data = user_data;
+    audio_stream_source->file_eof         = false;
+
+    audio_stream_source->input_snd_file_handle = sf_open(file, SFM_READ, &audio_stream_source->input_snd_file_info);
+    if (!audio_stream_source->input_snd_file_handle) {
+        fprintf(stderr, "%s: Failed to open file %s: %s\n", __func__, file, sf_strerror(NULL));
+        free(audio_stream_source);
+        return NULL;
     }
 
-    audio_stream_source.thread_loop           = pw_thread_loop_new("audio-src", NULL);
-    audio_stream_source.loop                  = pw_thread_loop_get_loop(audio_stream_source.thread_loop);
-    audio_stream_source.running               = true;
+    audio_stream_source->thread_loop = pw_thread_loop_new("audio-src", NULL);
+    audio_stream_source->loop        = pw_thread_loop_get_loop(audio_stream_source->thread_loop);
+    audio_stream_source->running     = true;
 
-    spa_ringbuffer_init(&audio_stream_source.ring);
-    if ((audio_stream_source.eventfd = spa_system_eventfd_create(audio_stream_source.loop->system, SPA_FD_CLOEXEC)) < 0) {
-        fprintf(stderr, "%s: Failed to create eventfd: %d\n", __func__, errno);
-        return -1;
-    }
+    spa_ringbuffer_init(&audio_stream_source->ring);
+    audio_stream_source->eventfd = spa_system_eventfd_create(audio_stream_source->loop->system, SPA_FD_CLOEXEC);
 
-    audio_stream_source.output_playback_stream = pw_stream_new_simple(
-        audio_stream_source.loop,
+    pw_loop_add_io(audio_stream_source->loop, audio_stream_source->eventfd, SPA_IO_IN, true, on_eventfd_signal, audio_stream_source);
+
+    audio_stream_source->output_playback_stream = pw_stream_new_simple(
+        audio_stream_source->loop,
         "audio-src-ring",
         pw_properties_new(
             PW_KEY_MEDIA_TYPE, "Audio",
@@ -125,7 +179,7 @@ int ctm_play_sound(const char* file) {
             PW_KEY_MEDIA_ROLE, "Music",
             NULL),
         &stream_events,
-        &audio_stream_source);
+        audio_stream_source);
 
     uint8_t                buffer[1024];
     struct spa_pod_builder b = SPA_POD_BUILDER_INIT(buffer, sizeof(buffer));
@@ -135,15 +189,15 @@ int ctm_play_sound(const char* file) {
         SPA_PARAM_EnumFormat,
         &SPA_AUDIO_INFO_RAW_INIT(
             .format = SPA_AUDIO_FORMAT_S16,
-            .channels = audio_stream_source.input_snd_file_info.channels,
-            .rate = audio_stream_source.input_snd_file_info.samplerate,
+            .channels = audio_stream_source->input_snd_file_info.channels,
+            .rate = audio_stream_source->input_snd_file_info.samplerate,
         )
     );
 
-    pw_thread_loop_start(audio_stream_source.thread_loop);
-    pw_thread_loop_lock(audio_stream_source.thread_loop);
+    pw_thread_loop_start(audio_stream_source->thread_loop);
+    pw_thread_loop_lock(audio_stream_source->thread_loop);
 
-    pw_stream_connect(audio_stream_source.output_playback_stream,
+    pw_stream_connect(audio_stream_source->output_playback_stream,
                       PW_DIRECTION_OUTPUT,
                       PW_ID_ANY,
                       PW_STREAM_FLAG_AUTOCONNECT |
@@ -151,34 +205,24 @@ int ctm_play_sound(const char* file) {
                       PW_STREAM_FLAG_RT_PROCESS,
                       params, 1);
 
-    refill_ringbuffer(&audio_stream_source);
+    refill_ringbuffer(audio_stream_source);
 
-    pw_thread_loop_unlock(audio_stream_source.thread_loop);
+    pw_thread_loop_unlock(audio_stream_source->thread_loop);
+    return audio_stream_source;
+}
 
-    // Main event loop.
-    while (audio_stream_source.running) {
-        uint64_t count;
+void ctm_sound_stop(CtmAudioStreamSource* audio_stream_source) {
+    if (audio_stream_source) {
+        // Clean up after ourselves.
+        pw_thread_loop_stop(audio_stream_source->thread_loop);
 
-        // Wait for the signal from the process callback stating that space is available.
-        spa_system_eventfd_read(audio_stream_source.loop->system, audio_stream_source.eventfd, &count);
+        pw_thread_loop_lock(audio_stream_source->thread_loop);
+        pw_stream_destroy(audio_stream_source->output_playback_stream);
+        pw_thread_loop_unlock(audio_stream_source->thread_loop);
 
-        // Lock, refill, unlock.
-        pw_thread_loop_lock(audio_stream_source.thread_loop);
-        refill_ringbuffer(&audio_stream_source);
-        pw_thread_loop_unlock(audio_stream_source.thread_loop);
+        pw_thread_loop_destroy(audio_stream_source->thread_loop);
+        close(audio_stream_source->eventfd);
+        sf_close(audio_stream_source->input_snd_file_handle);
+        free(audio_stream_source);
     }
-
-    // Clean up after ourselves.
-    pw_thread_loop_stop(audio_stream_source.thread_loop);
-
-    pw_thread_loop_lock(audio_stream_source.thread_loop);
-    pw_stream_destroy(audio_stream_source.output_playback_stream);
-    pw_thread_loop_unlock(audio_stream_source.thread_loop);
-
-    pw_thread_loop_destroy(audio_stream_source.thread_loop);
-    close(audio_stream_source.eventfd);
-    sf_close(audio_stream_source.input_snd_file_handle);
-    pw_deinit();
-
-    return 0;
 }
