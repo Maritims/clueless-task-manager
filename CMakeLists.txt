@@ -21,6 +21,7 @@ add_compile_options(
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GTK3 REQUIRED gtk+-3.0)
 
+add_subdirectory(modules/sound)
 add_subdirectory(modules/sysinfo)
 
 file(GLOB_RECURSE APP_SOURCES
@@ -28,8 +29,7 @@ file(GLOB_RECURSE APP_SOURCES
         "src/main.c"
 )
 
-add_executable(clueless-task-mgr ${APP_SOURCES}
-        include/ctm_common.h)
+add_executable(clueless-task-mgr ${APP_SOURCES})
 
 target_include_directories(clueless-task-mgr PRIVATE
         ${CMAKE_SOURCE_DIR}/include
@@ -39,6 +39,10 @@ target_include_directories(clueless-task-mgr PRIVATE
 target_compile_options(clueless-task-mgr PRIVATE ${GTK3_CFLAGS_OTHER})
 
 target_link_directories(clueless-task-mgr PRIVATE ${GTK3_LIBRARY_DIRS})
-target_link_libraries(clueless-task-mgr PRIVATE sysinfo ${GTK3_LIBRARIES})
+target_link_libraries(clueless-task-mgr PRIVATE
+        sound
+        sysinfo
+        ${GTK3_LIBRARIES}
+)
 
 enable_testing()

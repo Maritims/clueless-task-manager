@@ -6,6 +6,8 @@
 
 #include "ctm_process_page.h"
 
+#include "ctm_sound.h"
+
 typedef struct {
     const char* title;
     int         column_id;
@@ -232,6 +234,7 @@ void ctm_process_page_end_task(GtkButton* btn, gpointer data) {
         if (pid > 1) {
             if (kill(pid, SIGKILL) == 0) {
                 g_print("Killed task %s\n", name);
+                //ctm_play_sound("/home/martin/Nedlastinger/Wilhelm Scream Remastered.wav");
             } else {
                 fprintf(stderr, "Failed to kill task %s: %s\n", name, strerror(errno));
             }
