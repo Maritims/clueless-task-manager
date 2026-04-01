@@ -1,6 +1,10 @@
-//
-// Created by martin on 01.04.2026.
-//
+/**
+ * @file ctm_sound.c
+ * @author Martin Severin Steffensen
+ * @date 02 April 2026
+ *
+ * This module provides functionality for asynchronous playback of sound files using libpipewire and libsndfile.
+ */
 
 #include "ctm_sound.h"
 
