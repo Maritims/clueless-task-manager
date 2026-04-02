@@ -4,6 +4,7 @@
  * @date 02 April 2026
  *
  * This module provides functionality for asynchronous playback of sound files using libpipewire and libsndfile.
+ * A ringbuffer and event-based architecture is used to ensure smooth playback.
  */
 
 #include "ctm_sound.h"
@@ -36,6 +37,10 @@ struct CtmAudioStreamSource {
     int8_t                buffer[BUFFER_SIZE];
 };
 
+/**
+ *
+ * @param userdata
+ */
 static void on_playback_process(void* userdata) {
     CtmAudioStreamSource* audio_stream_source  = userdata;
     struct pw_buffer*     stream_buffer_handle = pw_stream_dequeue_buffer(audio_stream_source->output_playback_stream);
@@ -77,29 +82,37 @@ static const struct pw_stream_events stream_events = {
     .process = on_playback_process,
 };
 
+/**
+ * Fill the ringbuffer with sound data.
+ * @param userdata The audio stream source.
+ */
 static void refill_ringbuffer(void* userdata) {
     CtmAudioStreamSource* audio_stream_source = userdata;
-    const int             stride              = sizeof(int16_t) * audio_stream_source->input_snd_file_info.channels;
-    int16_t               buffer[4096];
-    uint32_t              read_index;
-    uint32_t              write_index;
+    // The stride is the distance between audio frames.
+    const int stride = sizeof(int16_t) * audio_stream_source->input_snd_file_info.channels;
+    int16_t   local_buffer[4096];
+    uint32_t  read_index;
+    uint32_t  write_index;
 
-    const int32_t  used_space      = spa_ringbuffer_get_write_index(&audio_stream_source->ring, &read_index);
-    const uint32_t available_space = BUFFER_SIZE - used_space;
-    sf_count_t     frames_to_read  = sizeof(buffer) / stride;
+    const int32_t  used_space      = spa_ringbuffer_get_write_index(&audio_stream_source->ring, &read_index); // How much space has been consumed in the ringbuffer?
+    const uint32_t available_space = BUFFER_SIZE - used_space;                                                // How much room is there in the ringbuffer?
+    sf_count_t     frames_to_read  = sizeof(local_buffer) / stride;                                           // How many frames can we fit in our local buffer?
 
+    // How many frames are we actually going to read?
     if (available_space / stride < frames_to_read) {
         frames_to_read = available_space / stride;
     }
 
     if (frames_to_read > 0) {
-        const sf_count_t frames_read = sf_readf_short(audio_stream_source->input_snd_file_handle, buffer, frames_to_read);
+        const sf_count_t frames_read = sf_readf_short(audio_stream_source->input_snd_file_handle, local_buffer, frames_to_read);
 
         if (frames_read > 0) {
+            // We read some frames from our input file. Let's write them to the ringbuffer for playback!
             const uint32_t bytes_to_write = frames_read * stride;
-            spa_ringbuffer_write_data(&audio_stream_source->ring, audio_stream_source->buffer, BUFFER_SIZE, read_index % BUFFER_SIZE, buffer, bytes_to_write);
+            spa_ringbuffer_write_data(&audio_stream_source->ring, audio_stream_source->buffer, BUFFER_SIZE, read_index % BUFFER_SIZE, local_buffer, bytes_to_write);
             spa_ringbuffer_write_update(&audio_stream_source->ring, read_index + bytes_to_write);
         } else {
+            // There aren't any more frames to read. We've reached the end of the file.
             audio_stream_source->file_eof = true;
         }
     }
@@ -107,7 +120,7 @@ static void refill_ringbuffer(void* userdata) {
     spa_ringbuffer_get_read_index(&audio_stream_source->ring, &read_index);
     spa_ringbuffer_get_write_index(&audio_stream_source->ring, &write_index);
 
-    if (audio_stream_source->file_eof && ((read_index >= write_index))) {
+    if (audio_stream_source->file_eof && read_index >= write_index) {
         audio_stream_source->running = false;
         if (audio_stream_source->on_finished) {
             audio_stream_source->on_finished(audio_stream_source, audio_stream_source->on_finished_data);
@@ -115,6 +128,9 @@ static void refill_ringbuffer(void* userdata) {
     }
 }
 
+/**
+ * Event handler. This is where the magic happens. Lock the thread, fill the ringbuffer, and unlock the thread.
+ */
 static void on_eventfd_signal(void* userdata, int fd, uint32_t mask) {
     CtmAudioStreamSource* audio_stream_source = userdata;
     uint64_t              count;
@@ -126,6 +142,9 @@ static void on_eventfd_signal(void* userdata, int fd, uint32_t mask) {
     pw_thread_loop_unlock(audio_stream_source->thread_loop);
 }
 
+/**
+ * Guard against multiple initialisations of the sound system.
+ */
 static bool is_initialized = false;
 
 void ctm_sound_init(void) {
@@ -145,19 +164,27 @@ void ctm_sound_deinit(void) {
 }
 
 CtmAudioStreamSource* ctm_sound_play_async(const char* file, CtmSoundCallback on_finished, void* user_data) {
+    // Boot up the sound system.
     ctm_sound_init();
 
+    // Create the audio stream source which we'll use to play the sound.
     CtmAudioStreamSource* audio_stream_source = malloc(sizeof(CtmAudioStreamSource));
     if (audio_stream_source == NULL) {
         fprintf(stderr, "%s: Failed to allocate memory\n", __func__);
         return NULL;
     }
+
+    // Start with a blank slate.
     memset(audio_stream_source, 0, sizeof(CtmAudioStreamSource));
 
+    // State that we haven't reached the end of the input file yet (that would have been weird!).
+    audio_stream_source->file_eof = false;
+
+    // Wire the callback function.
     audio_stream_source->on_finished      = on_finished;
     audio_stream_source->on_finished_data = user_data;
-    audio_stream_source->file_eof         = false;
 
+    // Open the sound file and store the file handle.
     audio_stream_source->input_snd_file_handle = sf_open(file, SFM_READ, &audio_stream_source->input_snd_file_info);
     if (!audio_stream_source->input_snd_file_handle) {
         fprintf(stderr, "%s: Failed to open file %s: %s\n", __func__, file, sf_strerror(NULL));
@@ -165,15 +192,19 @@ CtmAudioStreamSource* ctm_sound_play_async(const char* file, CtmSoundCallback on
         return NULL;
     }
 
+    // Create the loop and signal that the audio stream source is up and running.
     audio_stream_source->thread_loop = pw_thread_loop_new("audio-src", NULL);
     audio_stream_source->loop        = pw_thread_loop_get_loop(audio_stream_source->thread_loop);
     audio_stream_source->running     = true;
 
+    // Initialise the ringbuffer to use for smooth playback.
     spa_ringbuffer_init(&audio_stream_source->ring);
-    audio_stream_source->eventfd = spa_system_eventfd_create(audio_stream_source->loop->system, SPA_FD_CLOEXEC);
 
+    // Create and wire the file descriptor used for driving the event based architecture so we know when to do what.
+    audio_stream_source->eventfd = spa_system_eventfd_create(audio_stream_source->loop->system, SPA_FD_CLOEXEC);
     pw_loop_add_io(audio_stream_source->loop, audio_stream_source->eventfd, SPA_IO_IN, true, on_eventfd_signal, audio_stream_source);
 
+    // Establish the playback stream which we'll transmit the data from our input file to.
     audio_stream_source->output_playback_stream = pw_stream_new_simple(
         audio_stream_source->loop,
         "audio-src-ring",
@@ -198,6 +229,7 @@ CtmAudioStreamSource* ctm_sound_play_async(const char* file, CtmSoundCallback on
         )
     );
 
+    // Start the thread, lock it, connect the stream, fill the ringbuffer, unlock and let the event-based architecture take us towards and across the finish line in the background.
     pw_thread_loop_start(audio_stream_source->thread_loop);
     pw_thread_loop_lock(audio_stream_source->thread_loop);
 
@@ -217,13 +249,15 @@ CtmAudioStreamSource* ctm_sound_play_async(const char* file, CtmSoundCallback on
 
 void ctm_sound_stop(CtmAudioStreamSource* audio_stream_source) {
     if (audio_stream_source) {
-        // Clean up after ourselves.
+        // Stop the thread before doing anything else.
         pw_thread_loop_stop(audio_stream_source->thread_loop);
 
+        // Lock the thread, destroy the stream and unlock the thread.
         pw_thread_loop_lock(audio_stream_source->thread_loop);
         pw_stream_destroy(audio_stream_source->output_playback_stream);
         pw_thread_loop_unlock(audio_stream_source->thread_loop);
 
+        // Destroy the thread, destroy file descriptors and handles, then free the memory.
         pw_thread_loop_destroy(audio_stream_source->thread_loop);
         close(audio_stream_source->eventfd);
         sf_close(audio_stream_source->input_snd_file_handle);
