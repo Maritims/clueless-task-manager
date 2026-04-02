@@ -20,27 +20,23 @@
 #define BUFFER_SIZE (128*1024)
 
 struct CtmAudioStreamSource {
-    struct pw_thread_loop* thread_loop; // Manages timing and OS signals.
-    struct pw_loop*        loop;
-    SNDFILE*               input_snd_file_handle;  // The file to play.
+    struct pw_thread_loop* thread_loop;            // Dedicated thread and mutex for PipeWire.
+    struct pw_loop*        loop;                   // The underlying event loop instance.
+    SNDFILE*               input_snd_file_handle;  // Handle for the audio file via libsndfile.
     SF_INFO                input_snd_file_info;    // Metadata such as rate, channels, etc.
-    struct pw_stream*      output_playback_stream; // The actual exit point for audio data.
-    int                    eventfd;
-    bool                   running;
+    struct pw_stream*      output_playback_stream; // The PipeWire stream object for audio output.
+    int                    eventfd;                // Signal mechanism to notify the main loop when the ringbuffer needs more data.
+    bool                   running;                // Application-level state of the playback stream.
 
-    CtmSoundCallback on_finished;
-    void*            on_finished_data;
-    bool             file_eof;
+    CtmSoundCallback on_finished;      // The callback function to run once a sound has finished playing.
+    void*            on_finished_data; // Any data we may wish to pass to the callback function.
+    bool             file_eof;         // This flag indicates whether the end of the input sound file has been reached.
 
     // Ring buffer state.
-    struct spa_ringbuffer ring;
-    int8_t                buffer[BUFFER_SIZE];
+    struct spa_ringbuffer ring;                // The ringbuffer control structure.
+    int8_t                buffer[BUFFER_SIZE]; // The buffer used by the ringbuffer control structure to ensure smooth playback.
 };
 
-/**
- *
- * @param userdata
- */
 static void on_playback_process(void* userdata) {
     CtmAudioStreamSource* audio_stream_source  = userdata;
     struct pw_buffer*     stream_buffer_handle = pw_stream_dequeue_buffer(audio_stream_source->output_playback_stream);
