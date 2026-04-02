@@ -4,6 +4,10 @@ pkg_check_modules(SNDFILE REQUIRED IMPORTED_TARGET sndfile)
 add_library(sound STATIC src/ctm_sound.c
 )
 
+target_link_libraries(sound PRIVATE
+        cio
+)
+
 target_link_libraries(sound PUBLIC
         m
         PkgConfig::PIPEWIRE

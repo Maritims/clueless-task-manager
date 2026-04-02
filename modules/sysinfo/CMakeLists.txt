@@ -8,6 +8,8 @@ add_library(sysinfo STATIC
         src/ctm_system.c
 )
 
+target_link_libraries(sysinfo PRIVATE cio)
+
 # -----------------------------------------------
 # Include directories
 # -----------------------------------------------

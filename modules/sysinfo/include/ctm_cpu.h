@@ -22,9 +22,6 @@ unsigned long ctm_cpu_stats_get_idle(const CtmCpuStats* cpu_stats);
 unsigned long ctm_cpu_stats_get_iowait(const CtmCpuStats* cpu_stats);
 unsigned long ctm_cpu_stats_get_irq(const CtmCpuStats* cpu_stats);
 unsigned long ctm_cpu_stats_get_softirq(const CtmCpuStats* cpu_stats);
-unsigned long ctm_cpu_stats_get_total_sum(const CtmCpuStats* cpu_stats);
-
-// Logic.
-double ctm_cpu_stats_get_load_delta(const CtmCpuStats* previous, const CtmCpuStats* current);
+unsigned int  ctm_cpu_stats_get_usage_scaled(const CtmCpuStats* cpu_stats);
 
 #endif //CTM_CPU_H

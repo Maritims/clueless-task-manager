@@ -21,11 +21,14 @@ add_compile_options(
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GTK3 REQUIRED gtk+-3.0)
 
+add_subdirectory(modules/io)
 add_subdirectory(modules/sound)
 add_subdirectory(modules/sysinfo)
 
 file(GLOB_RECURSE APP_SOURCES
-        "src/ctm_process_page.c"
+        "src/ui/ctmappcontext.c"
+        "src/ui/ctmfooter.c"
+        "src/ui/ctmprocesspage.c"
         "src/main.c"
 )
 

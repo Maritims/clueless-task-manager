@@ -2,93 +2,13 @@
 // Created by martin on 26.03.2026.
 //
 
+#include <assert.h>
 #include <stdio.h>
 #include <gtk/gtk.h>
 
-#include "ctm_common.h"
-#include "ctm_process_page.h"
+#include "ctm.h"
+#include "ctm_cpu.h"
 #include "ctm_sound.h"
-
-struct CtmAppContext {
-    GtkTreeStore* process_store;
-    GtkTreeView*  process_view;
-    gboolean      show_processes_from_all_users;
-};
-
-CtmAppContext* ctm_app_context_new(void) {
-    return g_new0(CtmAppContext, 1);
-}
-
-void ctm_app_context_free(CtmAppContext* ctx) {
-    if (ctx == NULL) {
-        fprintf(stderr, "ctm_app_context_destroy: ctx cannot be NULL\n");
-        return;
-    }
-}
-
-GtkTreeStore* ctm_app_context_get_process_store(const CtmAppContext* ctx) {
-    if (ctx == NULL) {
-        fprintf(stderr, "ctm_app_context_get_process_store: ctx cannot be NULL\n");
-        return NULL;
-    }
-
-    return ctx->process_store;
-}
-
-int ctm_app_context_set_process_store(CtmAppContext* ctx, GtkTreeStore* store) {
-    if (ctx == NULL) {
-        fprintf(stderr, "ctm_app_context_set_process_store: ctx cannot be NULL\n");
-        return errno = EINVAL;
-    }
-    if (store == NULL) {
-        fprintf(stderr, "ctm_app_context_set_process_store: store cannot be NULL\n");
-        return errno = EINVAL;
-    }
-
-    ctx->process_store = store;
-    return 0;
-}
-
-GtkTreeView* ctm_app_context_get_process_view(const CtmAppContext* ctx) {
-    if (ctx == NULL) {
-        fprintf(stderr, "ctm_process_page_get_process_view: ctx cannot be NULL\n");
-        return NULL;
-    }
-
-    return ctx->process_view;
-}
-
-int ctm_app_context_set_process_view(CtmAppContext* ctx, GtkTreeView* view) {
-    if (ctx == NULL) {
-        fprintf(stderr, "ctm_process_page_set_process_view: ctx cannot be NULL\n");
-        return errno = EINVAL;
-    }
-    if (view == NULL) {
-        fprintf(stderr, "ctm_process_page_set_process_view: view cannot be NULL\n");
-        return errno = EINVAL;
-    }
-
-    ctx->process_view = view;
-    return 0;
-}
-
-gboolean ctm_app_context_get_show_processes_from_all_users(const CtmAppContext* ctx) {
-    if (ctx == NULL) {
-        fprintf(stderr, "ctm_app_context_get_show_processes_from_all_users: ctx cannot be NULL\n");
-        return FALSE;
-    }
-
-    return ctx->show_processes_from_all_users;
-}
-
-void ctm_app_context_set_show_processes_from_all_users(CtmAppContext* ctx, const gboolean value) {
-    if (ctx == NULL) {
-        fprintf(stderr, "ctm_app_context_set_show_processes_from_all_users: ctx cannot be NULL\n");
-        return;
-    }
-
-    ctx->show_processes_from_all_users = value;
-}
 
 void ctm_format_duration(const long long time_in_ms, char* buffer, const size_t buffer_size) {
     if (buffer == NULL) {
@@ -99,14 +19,10 @@ void ctm_format_duration(const long long time_in_ms, char* buffer, const size_t 
         fprintf(stderr, "ctm_format_duration: buffer_size cannot be 0\n");
         return;
     }
-    if (time_in_ms == 0) {
-        buffer[0] = '\0';
-        return;
-    }
 
-    const unsigned int hours   = (int) (time_in_ms / 3600000);
-    const unsigned int minutes = (int) (time_in_ms % 3600000 / 60000);
-    const unsigned int seconds = (int) (time_in_ms % 60000 / 1000);
+    const unsigned int hours   = time_in_ms == 0 ? 0 : (int) (time_in_ms / 3600000);
+    const unsigned int minutes = time_in_ms == 0 ? 0 : (int) (time_in_ms % 3600000 / 60000);
+    const unsigned int seconds = time_in_ms == 0 ? 0 : (int) (time_in_ms % 60000 / 1000);
 
     snprintf(buffer, buffer_size, "%02u:%02u:%02u", hours, minutes, seconds);
     buffer[buffer_size - 1] = '\0';
@@ -119,9 +35,23 @@ static gboolean on_refresh_timeout(gpointer data) {
         return FALSE;
     }
 
-    CtmAppContext* ctx = data;
+    const CtmAppContext*   ctx                              = data;
+    const CtmProcessPage*  process_page                     = ctm_app_context_get_process_page(ctx);
+    const CtmFooter*       footer                           = ctm_app_context_get_footer(ctx);
+    const bool             include_processes_from_all_users = ctm_process_page_get_include_processes_from_all_users(process_page);
+    const CtmProcessArray* processes                        = ctm_processes_from_kernel(include_processes_from_all_users);
+    const size_t           process_count                    = ctm_process_array_get_count(processes);
+    const CtmCpuStats*     cpu_stats                        = ctm_cpu_stats_from_kernel();
 
-    ctm_process_page_refresh(ctx);
+    if (cpu_stats == NULL) {
+        fprintf(stderr, "%s: Failed to fetch CPU stats\n", __func__);
+        return FALSE;
+    }
+
+    const unsigned int     cpu_usage_scaled                 = ctm_cpu_stats_get_usage_scaled(cpu_stats);
+
+    ctm_process_page_refresh(process_page, processes);
+    ctm_footer_refresh(footer, process_count, cpu_usage_scaled);
 
     return TRUE;
 }
@@ -131,32 +61,37 @@ static gboolean on_refresh_timeout(gpointer data) {
 static void activate(GtkApplication* app, gpointer user_data) {
     (void) user_data;
 
-    CtmAppContext* app_context = ctm_app_context_new();
-    if (app_context == NULL) {
-        fprintf(stderr, "Failed to create app context\n");
-        return;
-    }
-
     // Window.
     GtkWidget* window = gtk_application_window_new(app);
     gtk_window_set_title(GTK_WINDOW(window), "Clueless Task Manager");
     gtk_window_set_default_size(GTK_WINDOW(window), 640, 480);
     gtk_window_set_application(GTK_WINDOW(window), app);
 
+    // Status bar.
+    CtmFooter* footer           = ctm_footer_new();
+    GtkWidget* footer_container = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
+    GtkWidget* footer_widget    = ctm_footer_get_widget(footer);
+    gtk_box_pack_start(GTK_BOX(footer_container), footer_widget, FALSE, FALSE, 0);
+
     // Pages.
-    GtkWidget* notebook     = gtk_notebook_new();
-    GtkWidget* process_page = ctm_process_page_new(app_context);
+    GtkWidget*      notebook            = gtk_notebook_new();
+    CtmProcessPage* process_page        = ctm_process_page_new();
+    GtkWidget*      process_page_widget = ctm_process_page_get_widget(process_page);
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), process_page_widget, gtk_label_new("Processes"));
 
-    if (process_page == NULL) {
-        fprintf(stderr, "Failed to create process page\n");
-        return;
-    }
+    // Layout container.
+    GtkWidget* layout_container = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
+    gtk_box_pack_start(GTK_BOX(layout_container), notebook, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(layout_container), footer_container, FALSE, FALSE, 0);
 
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), process_page, gtk_label_new("Processes"));
-    gtk_container_add(GTK_CONTAINER(window), notebook);
+    gtk_container_add(GTK_CONTAINER(window), layout_container);
+
+    // Context.
+    CtmAppContext* ctx = ctm_app_context_new(process_page, footer);
+    assert(ctx != NULL);
 
     // Event handlers.
-    guint on_refresh_timeout_id = g_timeout_add(1000, on_refresh_timeout, app_context);
+    guint on_refresh_timeout_id = g_timeout_add(1000, on_refresh_timeout, ctx);
 
     // Show everything.
     gtk_widget_show_all(window);

@@ -3,6 +3,7 @@
 //
 
 #include "ctm_cpu.h"
+#include "cio.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -10,15 +11,83 @@
 #include <string.h>
 
 struct CtmCpuStats {
+    /**
+     * @brief time spent in user mode
+     */
     unsigned long user;
+    /**
+     * @brief time spent processing nice processes in user mode
+     */
     unsigned long nice;
+    /**
+     * @brief time spent executing kernel code
+     */
     unsigned long system;
+    /**
+     * @brief time spent idle
+     */
     unsigned long idle;
+    /**
+     * @brief time spent waiting for I/O
+     */
     unsigned long iowait;
+    /**
+     * @brief time spent servicing interrupts
+     */
     unsigned long irq;
+    /**
+     * @brief time spent servicing software interrupts
+     */
     unsigned long softirq;
-    unsigned long total_sum; // calculated
+
+    /**
+     * @brief The average idle percentage scaled by 100 (e.g. 1234 = 12.34%).
+     */
+    unsigned int average_idle_scaled;
+    /**
+     * @brief The CPU usage percentage scaled by 100 (e.g. 8766 = 87.66%). (
+     */
+    unsigned int average_usage_scaled;
 };
+
+/**
+ * @brief Calculates the average idle percentage using fixed-point math with 2 decimal places.
+ * @param user See @ref CtmProcStat::user
+ * @param nice See @ref CtmProcStat::nice
+ * @param system See @ref CtmProcStat::system
+ * @param idle See @ref CtmProcStat::idle
+ * @param iowait See @ref CtmProcStat::iowait
+ * @param irq See @ref CtmProcStat::irq
+ * @param softirq See @ref CtmProcStat::softirq
+ */
+static unsigned int calculate_average_idle_scaled(
+    const unsigned long long user,
+    const unsigned long long nice,
+    const unsigned long long system,
+    const unsigned long long idle,
+    const unsigned long long iowait,
+    const unsigned long long irq,
+    const unsigned long long softirq
+) {
+    const unsigned long long total = user + nice + system + idle + iowait + irq + softirq;
+    if (total == 0) {
+        return 0;
+    }
+
+    // Scale by 10.000 because:
+    // 100 for the percentage conversion.
+    // 100 for the 2 decimal places of precision.
+    return idle * 10000ULL / total;
+}
+
+/**
+ * @brief Calculates the CPU usage using fixed-point math with 2 decimal places (e.g. 10,000 = 100.00%).
+ * @param average_idle_scaled The average idle percentage scaled by 100 (e.g. 9000 = 90.00%).
+ * @return The usage percentage scaled by 100 (e.g. 7356 = 73.56%).
+ */
+static unsigned int calculate_usage_scaled(const unsigned int average_idle_scaled) {
+    return 10000 - average_idle_scaled;
+}
 
 CtmCpuStats* ctm_cpu_stats_new(void) {
     CtmCpuStats* stats = malloc(sizeof(CtmCpuStats));
@@ -26,14 +95,8 @@ CtmCpuStats* ctm_cpu_stats_new(void) {
         fprintf(stderr, "Failed to allocate memory for CPU stats: %d\n", errno);
         return NULL;
     }
-    stats->user      = 0;
-    stats->nice      = 0;
-    stats->system    = 0;
-    stats->idle      = 0;
-    stats->iowait    = 0;
-    stats->irq       = 0;
-    stats->softirq   = 0;
-    stats->total_sum = 0;
+
+    *stats = (CtmCpuStats){0};
     return stats;
 }
 
@@ -44,48 +107,45 @@ void ctm_cpu_stats_free(CtmCpuStats* cpu_stats) {
 }
 
 CtmCpuStats* ctm_cpu_stats_from_kernel(void) {
-    FILE* fp = fopen("/proc/stat", "r");
-    if (!fp) {
-        fprintf(stderr, "OS error: %s\n", strerror(errno));
+    size_t file_size = 0;
+    char* proc_stat_buffer = cio_read_file("/proc/stat", &file_size);
+    if (proc_stat_buffer == NULL) {
+        fprintf(stderr, "%s: Failed to read /proc/stat: %s\n", __func__, strerror(errno));
         return NULL;
     }
 
-    char buf[256];
-    if (!fgets(buf, sizeof(buf), fp)) {
-        fprintf(stderr, "Failed to read /proc/stat: %s\n", strerror(errno));
-        fclose(fp);
-        return NULL;
-    }
-    fclose(fp);
-
-    char* p = buf;
-    if (strncmp(p, "cpu", 3) != 0) {
-        fprintf(stderr, "Invalid /proc/stat format: %s\n", buf);
+    if (strlen(proc_stat_buffer) <= 0) {
+        fprintf(stderr, "%s: proc_stat_buffer cannot be empty\n", __func__);
+        free(proc_stat_buffer);
         return NULL;
     }
 
-    p += 3;
-    while (*p != ' ') {
-        p++;
+    char* buffer_ptr = proc_stat_buffer;
+    if (strncmp(buffer_ptr, "cpu", 3) != 0) {
+        fprintf(stderr, "Invalid /proc/stat format: %s\n", proc_stat_buffer);
+        free(proc_stat_buffer);
+        return NULL;
     }
+    buffer_ptr += 5; // Run past the text "cpu  " (two following whitespace characters) before we start parsing the numbers.
 
     CtmCpuStats* cpu_stats = ctm_cpu_stats_new();
     if (!cpu_stats) {
-        fprintf(stderr, "Failed to allocate memory for CPU stats: %d\n", errno);
+        fprintf(stderr, "%s: Failed to allocate memory for CPU stats\n", __func__);
+        free(proc_stat_buffer);
         return NULL;
     }
-    cpu_stats->user    = strtoul(p, &p, 10);
-    cpu_stats->nice    = strtoul(p, &p, 10);
-    cpu_stats->system  = strtoul(p, &p, 10);
-    cpu_stats->idle    = strtoul(p, &p, 10);
-    cpu_stats->iowait  = strtoul(p, &p, 10);
-    cpu_stats->irq     = strtoul(p, &p, 10);
-    cpu_stats->softirq = strtoul(p, &p, 10);
-    fclose(fp);
 
-    cpu_stats->total_sum = cpu_stats->user + cpu_stats->nice + cpu_stats->system + cpu_stats->idle + cpu_stats->iowait + cpu_stats->irq + cpu_stats->
-                           softirq;
+    cpu_stats->user                 = strtoul(buffer_ptr, &buffer_ptr, 10);
+    cpu_stats->nice                 = strtoul(buffer_ptr, &buffer_ptr, 10);
+    cpu_stats->system               = strtoul(buffer_ptr, &buffer_ptr, 10);
+    cpu_stats->idle                 = strtoul(buffer_ptr, &buffer_ptr, 10);
+    cpu_stats->iowait               = strtoul(buffer_ptr, &buffer_ptr, 10);
+    cpu_stats->irq                  = strtoul(buffer_ptr, &buffer_ptr, 10);
+    cpu_stats->softirq              = strtoul(buffer_ptr, &buffer_ptr, 10);
+    cpu_stats->average_idle_scaled  = calculate_average_idle_scaled(cpu_stats->user, cpu_stats->nice, cpu_stats->system, cpu_stats->idle, cpu_stats->iowait, cpu_stats->irq, cpu_stats->softirq);
+    cpu_stats->average_usage_scaled = calculate_usage_scaled(cpu_stats->average_idle_scaled);
 
+    free(proc_stat_buffer);
     return cpu_stats;
 }
 
@@ -145,22 +205,10 @@ unsigned long ctm_cpu_stats_get_softirq(const CtmCpuStats* cpu_stats) {
     return cpu_stats->softirq;
 }
 
-unsigned long ctm_cpu_stats_get_total_sum(const CtmCpuStats* cpu_stats) {
-    if (!cpu_stats) {
-        fprintf(stderr, "Invalid argument: NULL\n");
-        return -1;
+unsigned int ctm_cpu_stats_get_usage_scaled(const CtmCpuStats* cpu_stats) {
+    if (cpu_stats == NULL) {
+        fprintf(stderr, "%s: cpu_stats cannot be NULL\n", __func__);
+        return 0;
     }
-    return cpu_stats->total_sum;
-}
-
-double ctm_cpu_stats_get_load_delta(const CtmCpuStats* previous, const CtmCpuStats* current) {
-    if (!previous || !current) {
-        fprintf(stderr, "Invalid argument: NULL\n");
-        return -1;
-    }
-
-    const unsigned long total_difference = current->total_sum - previous->total_sum;
-    const unsigned long idle_difference  = current->idle - previous->idle;
-
-    return total_difference == 0 ? 0.0 : (1.0 - (double) idle_difference / (double) total_difference) * 100.0;
+    return cpu_stats->average_usage_scaled;
 }
