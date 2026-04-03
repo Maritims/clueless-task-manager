@@ -3,14 +3,15 @@
 //
 
 #include <assert.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <gtk/gtk.h>
 
-#include "ctm.h"
-#include "ctm_cpu.h"
-#include "ctm_sound.h"
+#include "ctm/ui.h"
+#include "ctm/sys.h"
+#include "ctm/sound.h"
 
-void ctm_format_duration(const long long time_in_ms, char* buffer, const size_t buffer_size) {
+void cui_format_duration(const long long time_in_ms, char* buffer, const size_t buffer_size) {
     if (buffer == NULL) {
         fprintf(stderr, "ctm_format_duration: buffer cannot be NULL\n");
         return;
@@ -36,22 +37,22 @@ static gboolean on_refresh_timeout(gpointer data) {
     }
 
     const CtmAppContext*   ctx                              = data;
-    const CtmProcessPage*  process_page                     = ctm_app_context_get_process_page(ctx);
-    const CtmFooter*       footer                           = ctm_app_context_get_footer(ctx);
-    const bool             include_processes_from_all_users = ctm_process_page_get_include_processes_from_all_users(process_page);
-    const CtmProcessArray* processes                        = ctm_processes_from_kernel(include_processes_from_all_users);
-    const size_t           process_count                    = ctm_process_array_get_count(processes);
-    const CtmCpuStats*     cpu_stats                        = ctm_cpu_stats_from_kernel();
+    const CtmProcessPage*  process_page                     = CtmAppContext_GetProcessPage(ctx);
+    const CtmFooter*       footer                           = CtmAppContext_GetFooter(ctx);
+    const bool             include_processes_from_all_users = CtmProcessPage_GetIncludeProcessesFromAllUsers(process_page);
+    const CtmProcessArray* processes                        = CtmProcessArray_LoadFromKernel(include_processes_from_all_users);
+    const size_t           process_count                    = CtmProcessArray_GetCount(processes);
+    const CtmCpu*          cpu_stats                        = CtmCpu_LoadFromKernel();
 
     if (cpu_stats == NULL) {
         fprintf(stderr, "%s: Failed to fetch CPU stats\n", __func__);
         return FALSE;
     }
 
-    const unsigned int     cpu_usage_scaled                 = ctm_cpu_stats_get_usage_scaled(cpu_stats);
+    const unsigned int cpu_usage_scaled = CtmCpu_GetUsageScaled(cpu_stats);
 
-    ctm_process_page_refresh(process_page, processes);
-    ctm_footer_refresh(footer, process_count, cpu_usage_scaled);
+    CtmProcessPage_Refresh(process_page, processes);
+    CtmFooter_Refresh(footer, process_count, cpu_usage_scaled);
 
     return TRUE;
 }
@@ -68,15 +69,15 @@ static void activate(GtkApplication* app, gpointer user_data) {
     gtk_window_set_application(GTK_WINDOW(window), app);
 
     // Status bar.
-    CtmFooter* footer           = ctm_footer_new();
+    CtmFooter* footer           = CtmFooter_Create();
     GtkWidget* footer_container = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
-    GtkWidget* footer_widget    = ctm_footer_get_widget(footer);
+    GtkWidget* footer_widget    = CtmFooter_GetWidget(footer);
     gtk_box_pack_start(GTK_BOX(footer_container), footer_widget, FALSE, FALSE, 0);
 
     // Pages.
     GtkWidget*      notebook            = gtk_notebook_new();
-    CtmProcessPage* process_page        = ctm_process_page_new();
-    GtkWidget*      process_page_widget = ctm_process_page_get_widget(process_page);
+    CtmProcessPage* process_page        = CtmProcessPage_Create();
+    GtkWidget*      process_page_widget = CtmProcessPage_GetWidget(process_page);
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), process_page_widget, gtk_label_new("Processes"));
 
     // Layout container.
@@ -87,7 +88,7 @@ static void activate(GtkApplication* app, gpointer user_data) {
     gtk_container_add(GTK_CONTAINER(window), layout_container);
 
     // Context.
-    CtmAppContext* ctx = ctm_app_context_new(process_page, footer);
+    CtmAppContext* ctx = CtmAppContext_Create(process_page, footer);
     assert(ctx != NULL);
 
     // Event handlers.
