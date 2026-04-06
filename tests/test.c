@@ -1,6 +1,3 @@
-//
-// Created by martin on 03.04.2026.
-//
 #include "test.h"
 
 #include <assert.h>
@@ -59,20 +56,20 @@ int assert_unsigned_long_equality(const unsigned long expected, const unsigned l
 }
 
 int run_all_tests(const TestCase* test_cases, const size_t test_count) {
+    int      failed_tests = 0;
+    size_t   i;
+    TestCase test_case;
+    char     test_output_buffer[1024];
+
     assert(test_cases != NULL && "test_cases must not be NULL");
     assert(test_count > 0 && "test_count must be greater than 0");
-    int    failed_tests              = 0;
-    size_t cio_read_file_invocations = 0;
 
-    printf("Running %zu test(s)...\n", test_count);
+    printf("Running %lu test(s)...\n", test_count);
 
-    for (size_t i = 0; i < test_count; i++) {
-        cio_read_file_invocations = 0;
+    for (i = 0; i < test_count; i++) {
+        test_case = test_cases[i];
 
-        const TestCase test_case = test_cases[i];
-        char           test_output_buffer[1024];
-
-        snprintf(test_output_buffer, sizeof(test_output_buffer), "  [%zu/%zu]: %s...", i + 1, test_count, test_case.name);
+        snprintf(test_output_buffer, sizeof(test_output_buffer), "  [%lu/%lu]: %s...", i + 1, test_count, test_case.name);
 
         if (test_case.func() == 0) {
             snprintf(test_output_buffer + strlen(test_output_buffer), sizeof(test_output_buffer) - strlen(test_output_buffer), "passed\n");

@@ -1,12 +1,12 @@
 /**
- * @file ctm_sound.h
+ * @file sound.h
  * @author Martin Severin Steffensen
  * @date 02 April 2026
  * @brief Sound system API.
  */
 
-#ifndef CLUELESS_TASK_MGR_CTM_SOUND_H
-#define CLUELESS_TASK_MGR_CTM_SOUND_H
+#ifndef CTM_SOUND_H
+#define CTM_SOUND_H
 
 typedef struct CtmAudioStreamSource CtmAudioStreamSource;
 typedef void (*                     CtmSoundCallback)(CtmAudioStreamSource* audio_stream_source, void* user_data);
@@ -39,4 +39,4 @@ CtmAudioStreamSource* ctm_sound_play_async(const char* file, CtmSoundCallback on
  */
 void ctm_sound_stop(CtmAudioStreamSource* audio_stream_source);
 
-#endif //CLUELESS_TASK_MGR_CTM_SOUND_H
+#endif
