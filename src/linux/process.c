@@ -11,14 +11,14 @@
 #define PROCESS_NAME_MAX 16
 
 struct Process {
-    pid_t         pid;
+    unsigned int  pid;
     unsigned int  uid;
     char          username[LOGIN_NAME_MAX];
     char          state;
     char          name[PROCESS_NAME_MAX];
-    unsigned long utime;  /* user time ticks */
-    unsigned long stime;  /* kernel time ticks */
-    long          rss; /* resident set size, the portion of memory (measured in kilobytes) occupied by a process that is held in RAM. */
+    unsigned long utime; /* user time ticks */
+    unsigned long stime; /* kernel time ticks */
+    long          rss;   /* resident set size, the portion of memory (measured in kilobytes) occupied by a process that is held in RAM. */
     unsigned long start_time;
 };
 
@@ -49,7 +49,7 @@ static int read_file(const char* file_path, char* buffer, const size_t buffer_si
     return 0;
 }
 
-static int get_pid_file_path(const pid_t pid, char* out_buffer, const size_t out_buffer_size) {
+static int get_pid_file_path(const unsigned int pid, char* out_buffer, const size_t out_buffer_size) {
     int bytes_written;
 
     if (out_buffer == NULL || out_buffer_size == 0) {
@@ -153,7 +153,7 @@ static int get_process_name(char** out_end_ptr, char* out_buffer, const size_t o
     return 0;
 }
 
-Process* process_get(const pid_t pid) {
+Process* process_get(const unsigned int pid) {
     Process*    process;
     char        pid_file_path[PATH_MAX];
     char        pid_file_buffer[1024];
@@ -224,7 +224,7 @@ void process_free(Process* process) {
     }
 }
 
-pid_t process_get_pid(const Process* process) {
+unsigned int process_get_pid(const Process* process) {
     if (process == NULL) {
         fprintf(stderr, "ctm_proc_pid_stat_get_pid: process cannot be NULL\n");
         return 0;

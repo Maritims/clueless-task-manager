@@ -1,8 +1,6 @@
 #ifndef CTM_CPU_METRICS_H
 #define CTM_CPU_METRICS_H
 
-#include <sys/types.h>
-
 typedef struct CPU         CPU;
 typedef struct CPUSampler  CPUSampler;
 typedef struct Memory      Memory;
@@ -31,9 +29,9 @@ unsigned long memory_get_total(const Memory* memory);
 unsigned long memory_get_free(const Memory* memory);
 unsigned long memory_get_available(const Memory* memory);
 
-Process*     process_get(pid_t pid);
+Process*     process_get(unsigned long pid);
 void         process_free(Process* process);
-pid_t        process_get_pid(const Process* process);
+unsigned int process_get_pid(const Process* process);
 const char*  process_get_name(const Process* process);
 const char*  process_get_state(const Process* process);
 const char*  process_get_user(const Process* process);
@@ -42,6 +40,6 @@ unsigned int process_get_total_time(const Process* process);
 ProcessList* process_list_get(void);
 void         process_list_free(ProcessList* process_list);
 size_t       process_list_get_count(const ProcessList* process_list);
-Process*     process_list_get_process(const ProcessList* process_list, pid_t pid);
+Process*     process_list_get_process(const ProcessList* process_list, unsigned int pid);
 
 #endif

@@ -8,9 +8,9 @@
 #include "ctm/ctm.h"
 
 struct ProcessList {
-    pid_t* pids;
-    size_t count;
-    size_t capacity;
+    unsigned int* pids;
+    size_t        count;
+    size_t        capacity;
 };
 
 ProcessList* process_list_get(void) {
@@ -29,7 +29,7 @@ ProcessList* process_list_get(void) {
 
     process_list->count    = 0;
     process_list->capacity = 100;
-    if ((process_list->pids = malloc(process_list->capacity * sizeof(pid_t))) == NULL) {
+    if ((process_list->pids = malloc(process_list->capacity * sizeof(unsigned int))) == NULL) {
         closedir(dir);
         fprintf(stderr, "process_list_get: Failed to allocate memory for process list: %s\n", strerror(errno));
         free(process_list);
@@ -63,10 +63,10 @@ ProcessList* process_list_get(void) {
         }
 
         if (process_list->count == process_list->capacity) {
-            pid_t* new_pids;
+            unsigned int* new_pids;
 
             process_list->capacity *= 2;
-            new_pids               = realloc(process_list->pids, process_list->capacity * sizeof(pid_t));
+            new_pids               = realloc(process_list->pids, process_list->capacity * sizeof(unsigned int));
             if (new_pids == NULL) {
                 fprintf(stderr, "process_list_get: Failed to allocate memory for process list: %s\n", strerror(errno));
                 process_list_free(process_list);
@@ -75,7 +75,7 @@ ProcessList* process_list_get(void) {
 
             process_list->pids = new_pids;
         }
-        process_list->pids[process_list->count++] = (pid_t) pid;
+        process_list->pids[process_list->count++] = (unsigned int) pid;
     }
 
     closedir(dir);
@@ -97,7 +97,7 @@ size_t process_list_get_count(const ProcessList* process_list) {
     return process_list->count;
 }
 
-Process* process_list_get_process(const ProcessList* process_list, const pid_t pid) {
+Process* process_list_get_process(const ProcessList* process_list, const unsigned int pid) {
     size_t i;
 
     if (process_list == NULL) {
