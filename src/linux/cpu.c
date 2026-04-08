@@ -36,7 +36,7 @@ int cpu_capture(CPU* cpu) {
     char*  line_buffer;
 
     if (cpu == NULL) {
-        fprintf(stderr, "cpu_populate: cpu cannot be NULL\n");
+        fprintf(stderr, "cpu_capture: cpu cannot be NULL\n");
         return -1;
     }
 

@@ -7,27 +7,21 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "ctm/ring_buffer.h"
+
 #define CTM_SAMPLER_CAPACITY 100
 
 struct Sampler {
-    void*        history;
-    size_t       item_size;
+    RingBuffer*  ring_buffer;
     unsigned int interval_ms;
     int          is_running;
 
-    size_t          head;
-    size_t          count;
     pthread_mutex_t lock;
     pthread_t       thread;
 
     SamplerCaptureFunc capture_fn;
     SamplerCallback    on_captured;
 };
-
-static void* get_sample_address(const Sampler* sampler, const size_t index) {
-    /* Cast to unsigned char to allow byte-level arithmetic */
-    return (unsigned char *) sampler->history + (index * sampler->item_size);
-}
 
 static void* sampler_thread_fn(void* sampler_ptr) {
     Sampler*        sampler = (Sampler *) sampler_ptr;
@@ -42,14 +36,11 @@ static void* sampler_thread_fn(void* sampler_ptr) {
 
         pthread_mutex_lock(&sampler->lock);
 
-        current_slot = get_sample_address(sampler, sampler->head);
+        current_slot = ring_buffer_advance(sampler->ring_buffer);
         notify       = 0;
 
         if (sampler->capture_fn(current_slot) == 0) {
-            sampler->head = (sampler->head + 1) % CTM_SAMPLER_CAPACITY;
-            if (sampler->count < CTM_SAMPLER_CAPACITY) {
-                sampler->count++;
-            }
+            ring_buffer_advance(sampler->ring_buffer);
             notify = 1;
         }
 
@@ -78,7 +69,7 @@ Sampler* sampler_create(const unsigned int interval_ms, const size_t item_size, 
         return NULL;
     }
 
-    if ((sampler->history = malloc(CTM_SAMPLER_CAPACITY * item_size)) == NULL) {
+    if ((sampler->ring_buffer = ring_buffer_alloc(CTM_SAMPLER_CAPACITY, item_size)) == NULL) {
         /* keep errno from malloc, free sampler and restore errno */
         const int error = errno;
         free(sampler);
@@ -88,18 +79,15 @@ Sampler* sampler_create(const unsigned int interval_ms, const size_t item_size, 
 
     if ((mutex_init_result = pthread_mutex_init(&sampler->lock, NULL)) != 0) {
         /* free history and sampler, then assign the result of mutex init to errno */
-        free(sampler->history);
+        ring_buffer_free(sampler->ring_buffer);
         free(sampler);
         errno = mutex_init_result;
         return NULL;
     }
 
-    sampler->item_size   = item_size;
     sampler->interval_ms = interval_ms;
     sampler->capture_fn  = capture_fn;
     sampler->on_captured = NULL;
-    sampler->head        = 0;
-    sampler->count       = 0;
     sampler->is_running  = 0;
 
     return sampler;
@@ -113,7 +101,7 @@ int sampler_destroy(Sampler* sampler) {
 
     sampler_stop(sampler);
     pthread_mutex_destroy(&sampler->lock);
-    free(sampler->history);
+    ring_buffer_free(sampler->ring_buffer);
     free(sampler);
 
     return 0;
@@ -182,7 +170,6 @@ int sampler_subscribe(Sampler* sampler, const SamplerCallback subscriber) {
 }
 
 long sampler_get_value(Sampler* sampler, const size_t window, SamplerProcessFunc process_fn) {
-    size_t capacity,      current_index, previous_index;
     void * current_data, *previous_data;
     long   result;
 
@@ -193,17 +180,14 @@ long sampler_get_value(Sampler* sampler, const size_t window, SamplerProcessFunc
 
     pthread_mutex_lock(&sampler->lock);
 
-    if (sampler->count <= window) {
+    current_data   = ring_buffer_peek(sampler->ring_buffer, 0);
+    previous_data  = ring_buffer_peek(sampler->ring_buffer, window);
+
+    if (current_data == NULL || previous_data == NULL) {
         pthread_mutex_unlock(&sampler->lock);
         errno = EAGAIN;
         return -1;
     }
-
-    capacity       = CTM_SAMPLER_CAPACITY;
-    current_index  = (sampler->head + capacity - 1) % capacity;
-    previous_index = (sampler->head + capacity - 1 - window) % capacity;
-    current_data   = get_sample_address(sampler, current_index);
-    previous_data  = get_sample_address(sampler, previous_index);
 
     result = process_fn(current_data, previous_data);
 

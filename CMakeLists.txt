@@ -12,6 +12,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 
+find_package(PkgConfig REQUIRED)
 find_package(Threads REQUIRED)
 
 add_compile_options(
@@ -23,7 +24,9 @@ add_compile_options(
 
 include("${CMAKE_SOURCE_DIR}/cmake/functions.cmake")
 
-set(COMMON_SOURCES
+set(COMMON_SOURCES "src/ring_buffer.c")
+
+set(LINUX_SOURCES
         "src/linux/cpu.c"
         "src/linux/memory.c"
         "src/linux/process.c"
@@ -31,18 +34,24 @@ set(COMMON_SOURCES
         "src/linux/sampler.c"
 )
 
-set(USE_GTK "Build with GTK interface" OFF)
-
-set(UI_SRC "src/terminal_ui.c")
-
-if(USE_GTK)
-endif()
-
-add_executable(${PROJECT_NAME} "src/main.c" ${COMMON_SOURCES} ${UI_SRC})
+add_executable(${PROJECT_NAME} "src/main.c" "src/terminal_ui.c" ${COMMON_SOURCES} ${LINUX_SOURCES} ${UI_SRC})
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(${PROJECT_NAME} PRIVATE Threads::Threads)
+
+pkg_check_modules(GTK3 IMPORTED_TARGET gtk+-3.0)
+
+if(GTK3_FOUND)
+    add_executable(ctm-gui "src/main.c" "src/gtk_ui.c" ${COMMON_SOURCES}
+            src/gtk_sampler.c)
+    target_compile_definitions(ctm-gui PRIVATE USE_GTK)
+    target_include_directories(ctm-gui PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(ctm-gui PRIVATE Threads::Threads PkgConfig::GTK3)
+else()
+    message(STATUS "GTK3 not found - ctm-gui target will not be built")
+endif ()
 
 enable_testing()
 
 add_ctm_test(TestCpu "tests/linux/cpu.c" "src/linux/cpu.c")
 add_ctm_test(TestMemory "tests/linux/memory.c" "src/linux/memory.c")
+add_ctm_test(TestRingBuffer "tests/ring_buffer.c" "src/ring_buffer.c")
