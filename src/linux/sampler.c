@@ -1,4 +1,4 @@
-#include "ctm/sampler.h"
+#include "ctm/ctm.h"
 
 #include <errno.h>
 #include <pthread.h>

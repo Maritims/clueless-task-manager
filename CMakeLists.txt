@@ -33,9 +33,7 @@ set(COMMON_SOURCES
 
 set(USE_GTK "Build with GTK interface" OFF)
 
-set(UI_SRC "src/terminal_ui.c"
-        include/ctm/sampler.h
-        src/linux/sampler.c)
+set(UI_SRC "src/terminal_ui.c")
 
 if(USE_GTK)
 endif()

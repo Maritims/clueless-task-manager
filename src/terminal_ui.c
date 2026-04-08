@@ -3,8 +3,6 @@
 #include <string.h>
 
 #include "ctm/ctm.h"
-#include "ctm/sampler.h"
-#include "ctm/ui.h"
 
 int ui_update(void* user_data) {
     Sampler* sampler;
