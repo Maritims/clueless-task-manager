@@ -1,11 +1,14 @@
 #ifndef CTM_CPU_METRICS_H
 #define CTM_CPU_METRICS_H
+#include <stddef.h>
 
 typedef struct CPU         CPU;
-typedef struct CPUSampler  CPUSampler;
 typedef struct Memory      Memory;
 typedef struct Process     Process;
 typedef struct ProcessList ProcessList;
+
+#define AS_CPU(ptr) ((CPU*)(ptr))
+#define AS_MEMORY(ptr) ((Memory*)(ptr))
 
 CPU*          cpu_alloc(void);
 int           cpu_capture(CPU* cpu);
@@ -14,14 +17,16 @@ void          cpu_free(CPU* cpu);
 size_t        cpu_size(void);
 unsigned long cpu_get_total_time(const CPU* cpu);
 unsigned long cpu_get_idle_time(const CPU* cpu);
-unsigned long cpu_get_user_usage(const CPU* current, const CPU* previous);
-unsigned long cpu_get_system_usage(const CPU* current, const CPU* previous);
-unsigned long cpu_get_total_usage(const CPU* current, const CPU* previous);
+long          cpu_get_user_usage(const CPU* current, const CPU* previous);
+long          cpu_get_system_usage(const CPU* current, const CPU* previous);
+/**
+ * Calculates the total CPU usage.
+ * @param current The newest CPU snapshot.
+ * @param previous The previous CPU snapshot.
+ * @return the result in "milli-percent" (1% = 1000)
+ */
+long cpu_get_total_usage(const CPU* current, const CPU* previous);
 
-CPUSampler* cpu_sampler_create(unsigned int interval_ms);
-void        cpu_sampler_destroy(CPUSampler* sampler);
-int         cpu_sampler_start(CPUSampler* sampler);
-long        cpu_sampler_get_avg_usage(CPUSampler* sampler, size_t window);
 
 Memory*       memory_get(void);
 void          memory_free(Memory* memory);

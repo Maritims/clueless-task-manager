@@ -13,6 +13,9 @@ struct CPU {
     unsigned long iowait;
     unsigned long irq;
     unsigned long softirq;
+    unsigned long steal;
+    unsigned long guest;
+    unsigned long guest_nice;
 };
 
 CPU* cpu_alloc(void) {
@@ -57,13 +60,16 @@ int cpu_capture(CPU* cpu) {
     }
     line_buffer += 5; /* Run past the text "cpu  " (two following whitespace characters) before we start parsing the numbers. */
 
-    cpu->user    = strtoul(line_buffer, &line_buffer, 10);
-    cpu->nice    = strtoul(line_buffer, &line_buffer, 10);
-    cpu->system  = strtoul(line_buffer, &line_buffer, 10);
-    cpu->idle    = strtoul(line_buffer, &line_buffer, 10);
-    cpu->iowait  = strtoul(line_buffer, &line_buffer, 10);
-    cpu->irq     = strtoul(line_buffer, &line_buffer, 10);
-    cpu->softirq = strtoul(line_buffer, &line_buffer, 10);
+    cpu->user       = strtoul(line_buffer, &line_buffer, 10);
+    cpu->nice       = strtoul(line_buffer, &line_buffer, 10);
+    cpu->system     = strtoul(line_buffer, &line_buffer, 10);
+    cpu->idle       = strtoul(line_buffer, &line_buffer, 10);
+    cpu->iowait     = strtoul(line_buffer, &line_buffer, 10);
+    cpu->irq        = strtoul(line_buffer, &line_buffer, 10);
+    cpu->softirq    = strtoul(line_buffer, &line_buffer, 10);
+    cpu->steal      = strtoul(line_buffer, &line_buffer, 10);
+    cpu->guest      = strtoul(line_buffer, &line_buffer, 10);
+    cpu->guest_nice = strtoul(line_buffer, &line_buffer, 10);
 
     return 0;
 }
@@ -108,42 +114,40 @@ unsigned long cpu_get_total_time(const CPU* cpu) {
     return cpu->user + cpu->nice + cpu->system + cpu->idle + cpu->iowait + cpu->irq + cpu->softirq;
 }
 
-unsigned long cpu_get_user_usage(const CPU* current, const CPU* previous) {
+long cpu_get_user_usage(const CPU* current, const CPU* previous) {
     (void) current;
     (void) previous;
     return 0L;
 }
 
-unsigned long cpu_get_system_usage(const CPU* current, const CPU* previous) {
+long cpu_get_system_usage(const CPU* current, const CPU* previous) {
     (void) current;
     (void) previous;
     return 0L;
 }
 
-unsigned long cpu_get_total_usage(const CPU* current, const CPU* previous) {
-    unsigned long current_total_time, current_idle_time, previous_total_time, previous_idle_time, total_time_delta, idle_time_delta;
+long cpu_get_total_usage(const CPU* current, const CPU* previous) {
+    unsigned long previous_idle_time,  current_idle_time;
+    unsigned long previous_total_time, current_total_time;
+    unsigned long idle_delta,          total_delta;
+    unsigned long average_idle_time;
+    unsigned long total_usage;
 
-    if (current == NULL) {
-        fprintf(stderr, "ctm_cpu_metrics_get_total_usage: current_metrics cannot be NULL\n");
-        return -1;
-    }
-    if (previous == NULL) {
-        fprintf(stderr, "ctm_cpu_metrics_get_total_usage: previous_metrics cannot be NULL\n");
-        return -1;
-    }
+    previous_idle_time = cpu_get_idle_time(previous);
+    current_idle_time  = cpu_get_idle_time(current);
 
-    current_total_time  = cpu_get_total_time(current);
-    current_idle_time   = cpu_get_idle_time(current);
     previous_total_time = cpu_get_total_time(previous);
-    previous_idle_time  = cpu_get_idle_time(previous);
-    total_time_delta    = current_total_time - previous_total_time;
+    current_total_time  = cpu_get_total_time(current);
 
-    if (total_time_delta == 0) {
-        fprintf(stderr, "ctm_cpu_metrics_get_total_usage: total_time_delta is 0\n");
-        return -1;
+    idle_delta  = current_idle_time - previous_idle_time;
+    total_delta = current_total_time - previous_total_time;
+
+    /* Do not divide by zero! */
+    if (total_delta == 0) {
+        return 0;
     }
 
-    idle_time_delta = current_idle_time - previous_idle_time;
-
-    return ((total_time_delta - idle_time_delta) * 10000UL) / total_time_delta;
+    average_idle_time = (idle_delta * 100000) / total_delta;
+    total_usage       = 100000 - average_idle_time;
+    return (long) total_usage;
 }

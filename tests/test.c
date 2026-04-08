@@ -33,6 +33,17 @@ int assert_int_equality(const int expected, const int actual, const char* messag
     return 1;
 }
 
+int assert_long_greater_than(const long expected, const long actual, const char* message) {
+    assert(message != NULL && strlen(message) > 0 && "message must not be NULL or empty");
+
+    if (actual > expected) {
+        return 0;
+    }
+
+    fprintf(stderr, "Assertion failed! Expected %ld to be greater than %ld: %s\n", actual, expected, message);
+    return 1;
+}
+
 int assert_unsigned_int_equality(const unsigned int expected, const unsigned int actual, const char* message) {
     assert(message != NULL && strlen(message) > 0 && "message must not be NULL or empty");
 

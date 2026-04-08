@@ -23,16 +23,24 @@ add_compile_options(
 
 include("${CMAKE_SOURCE_DIR}/cmake/functions.cmake")
 
-set(APP_SOURCES
+set(COMMON_SOURCES
         "src/linux/cpu.c"
         "src/linux/memory.c"
         "src/linux/process.c"
         "src/linux/process_list.c"
-        "src/main.c"
-        src/linux/cpu_sampler.c
+        "src/linux/sampler.c"
 )
 
-add_executable(${PROJECT_NAME} ${APP_SOURCES})
+set(USE_GTK "Build with GTK interface" OFF)
+
+set(UI_SRC "src/terminal_ui.c"
+        include/ctm/sampler.h
+        src/linux/sampler.c)
+
+if(USE_GTK)
+endif()
+
+add_executable(${PROJECT_NAME} "src/main.c" ${COMMON_SOURCES} ${UI_SRC})
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(${PROJECT_NAME} PRIVATE Threads::Threads)
 
