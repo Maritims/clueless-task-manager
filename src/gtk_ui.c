@@ -14,7 +14,7 @@ typedef struct {
 
 AppContext g_ctx;
 
-static gboolean ui_update_bridge(void* user_data) {
+static gboolean update_gtk_widgets(void* user_data) {
     long total_usage;
 
     (void) user_data;
@@ -38,9 +38,14 @@ static gboolean ui_update_bridge(void* user_data) {
     return G_SOURCE_REMOVE;
 }
 
+/**
+ * Bridges a Sampler with GTK.
+ * @param user_data Ignored.
+ * @return Always zero.
+ */
 int ui_update(void* user_data) {
     (void) user_data;
-    g_idle_add(ui_update_bridge, NULL);
+    g_idle_add(update_gtk_widgets, NULL);
     return 0;
 }
 
