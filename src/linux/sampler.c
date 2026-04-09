@@ -30,18 +30,24 @@ static void* sampler_thread_fn(void* sampler_ptr) {
     requested.tv_sec  = sampler->interval_ms / 1000;
     requested.tv_nsec = (sampler->interval_ms % 1000) * 1000000;
 
-    while (sampler->is_running) {
+    while (1) {
         void* current_slot;
         int   notify;
 
         pthread_mutex_lock(&sampler->lock);
 
+        if (!sampler->is_running) {
+            pthread_mutex_unlock(&sampler->lock);
+            break;
+        }
+
         current_slot = ring_buffer_advance(sampler->ring_buffer);
         notify       = 0;
 
         if (sampler->capture_fn(current_slot) == 0) {
-            ring_buffer_advance(sampler->ring_buffer);
             notify = 1;
+        } else {
+            fprintf(stderr, "ctm_sampler_thread_fn: Sampler capture function failed: %s\n", strerror(errno));
         }
 
         pthread_mutex_unlock(&sampler->lock);
@@ -150,7 +156,7 @@ int sampler_stop(Sampler* sampler) {
     pthread_mutex_unlock(&sampler->lock);
 
     if (was_running) {
-        if ((join_result = pthread_join(sampler->thread, NULL)) != -1) {
+        if ((join_result = pthread_join(sampler->thread, NULL)) != 0) {
             errno = join_result;
             return -1;
         }

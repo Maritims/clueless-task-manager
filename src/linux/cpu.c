@@ -139,6 +139,11 @@ long cpu_get_total_usage(const CPU* current, const CPU* previous) {
     previous_total_time = cpu_get_total_time(previous);
     current_total_time  = cpu_get_total_time(current);
 
+    if (previous_total_time == 0 && current_total_time == 0) {
+        errno = EBADMSG;
+        return -1;
+    }
+
     idle_delta  = current_idle_time - previous_idle_time;
     total_delta = current_total_time - previous_total_time;
 

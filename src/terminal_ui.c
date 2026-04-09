@@ -26,7 +26,7 @@ int ui_update(void* user_data) {
         return 0;
     }
 
-    fprintf(stderr, "\nui_update error: %s\n", strerror(errno));
+    fprintf(stderr, "ui_update error: %s\n", strerror(errno));
     return -1;
 }
 

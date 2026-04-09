@@ -2,6 +2,7 @@
 
 #include <errno.h>
 #include <stdlib.h>
+#include <string.h>
 
 struct RingBuffer {
     /**
@@ -54,13 +55,15 @@ void ring_buffer_free(RingBuffer* ring_buffer) {
 }
 
 void* ring_buffer_advance(RingBuffer* ring_buffer) {
-    ring_buffer->head = (ring_buffer->head + 1) % ring_buffer->capacity;
+    if (ring_buffer->count > 0) {
+        ring_buffer->head = (ring_buffer->head + 1) % ring_buffer->capacity;
+    }
 
     if (ring_buffer->count < ring_buffer->capacity) {
         ring_buffer->count++;
     }
 
-    return (void*)(ring_buffer->buffer + (ring_buffer->head * ring_buffer->item_size));
+    return ring_buffer->buffer + ring_buffer->head * ring_buffer->item_size;
 }
 
 void* ring_buffer_peek(const RingBuffer* ring_buffer, const size_t offset) {
