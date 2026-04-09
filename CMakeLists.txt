@@ -41,8 +41,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE Threads::Threads)
 pkg_check_modules(GTK3 IMPORTED_TARGET gtk+-3.0)
 
 if(GTK3_FOUND)
-    add_executable(ctm-gui "src/main.c" "src/gtk_ui.c" ${COMMON_SOURCES}
-            src/gtk_sampler.c)
+    add_executable(ctm-gui "src/main.c" "src/gtk_ui.c" ${COMMON_SOURCES} ${LINUX_SOURCES})
     target_compile_definitions(ctm-gui PRIVATE USE_GTK)
     target_include_directories(ctm-gui PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
     target_link_libraries(ctm-gui PRIVATE Threads::Threads PkgConfig::GTK3)
