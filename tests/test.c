@@ -66,6 +66,17 @@ int assert_unsigned_long_equality(const unsigned long expected, const unsigned l
     return 1;
 }
 
+int assert_string_equality(const char* expected, const char* actual, const char* message) {
+    assert(message != NULL && strlen(message) > 0 && "message must not be NULL or empty");
+
+    if (strcmp(expected, actual) == 0) {
+        return 0;
+    }
+
+    fprintf(stderr, "Assertion failed! Expected \"%s\", but got \"%s\": %s\n", expected, actual, message);
+    return 1;
+}
+
 int run_all_tests(const TestCase* test_cases, const size_t test_count) {
     int      failed_tests = 0;
     size_t   i;

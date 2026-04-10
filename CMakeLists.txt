@@ -24,7 +24,7 @@ add_compile_options(
 
 include("${CMAKE_SOURCE_DIR}/cmake/functions.cmake")
 
-set(COMMON_SOURCES "src/ring_buffer.c")
+set(COMMON_SOURCES "src/ring_buffer.c" "src/hash_map.c")
 
 set(LINUX_SOURCES
         "src/linux/cpu.c"
@@ -51,6 +51,7 @@ endif ()
 
 enable_testing()
 
+add_ctm_test(TestHashMap "tests/hash_map.c" "src/hash_map.c")
+add_ctm_test(TestRingBuffer "tests/ring_buffer.c" "src/ring_buffer.c")
 add_ctm_test(TestCpu "tests/linux/cpu.c" "src/linux/cpu.c")
 add_ctm_test(TestMemory "tests/linux/memory.c" "src/linux/memory.c")
-add_ctm_test(TestRingBuffer "tests/ring_buffer.c" "src/ring_buffer.c")

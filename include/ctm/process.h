@@ -7,8 +7,11 @@
 
 typedef struct Process Process;
 
+Process*     process_alloc(void);
+int          process_capture(Process* process);
 Process*     process_get(unsigned int pid);
 void         process_free(Process* process);
+size_t       process_size(void);
 unsigned int process_get_pid(const Process* process);
 const char*  process_get_name(const Process* process);
 const char*  process_get_state(const Process* process);

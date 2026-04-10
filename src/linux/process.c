@@ -92,8 +92,7 @@ static int get_user_from_uid(const uid_t uid, char* out_buffer, const size_t out
     }
 
     if (result == NULL) {
-        errno = ENOENT;
-        return -1;
+        return 0;
     }
 
     bytes_written = snprintf(out_buffer, out_buffer_size, "%s", pwd.pw_name);
@@ -153,45 +152,37 @@ static int get_process_name(char** out_end_ptr, char* out_buffer, const size_t o
     return 0;
 }
 
-Process* process_get(const unsigned int pid) {
-    Process*    process;
+int process_capture(Process* process) {
     char        pid_file_path[PATH_MAX];
     char        pid_file_buffer[1024];
     char*       pid_file_buffer_pos; /* for moving through pid_file_buffer */
     struct stat file_info;           /* for retrieving uid */
 
-    if (get_pid_file_path(pid, pid_file_path, sizeof(pid_file_path)) != 0) {
-        fprintf(stderr, "process_get: Failed to get pid file path: %s\n", strerror(errno));
-        return NULL;
+    if (process == NULL) {
+        errno = EINVAL;
+        return -1;
+    }
+
+    if (get_pid_file_path(process->pid, pid_file_path, sizeof(pid_file_path)) != 0) {
+        return -1;
     }
     if (stat(pid_file_path, &file_info) != 0) {
-        fprintf(stderr, "process_get: Failed to stat pid file: %s\n", strerror(errno));
-        return NULL;
+        return -1;
     }
     if (read_file(pid_file_path, pid_file_buffer, sizeof(pid_file_buffer)) != 0) {
-        fprintf(stderr, "process_get: Failed to read pid file: %s\n", strerror(errno));
-        return NULL;
+        return -1;
     }
-    if ((process = malloc(sizeof(Process))) == NULL) {
-        fprintf(stderr, "process_get: Failed to allocate memory for process: %d\n", errno);
-        return NULL;
-    }
-    if (get_user_from_uid(file_info.st_uid, process->username, sizeof(process->username)) != 0) {
-        fprintf(stderr, "process_get: Failed to get username: %s\n", strerror(errno));
-        free(process);
-        return NULL;
-    }
+
+    get_user_from_uid(file_info.st_uid, process->username, sizeof(process->username));
 
     /* Assign to pid_file_buffer_pos after read_file but before get_process_name */
     pid_file_buffer_pos = pid_file_buffer;
 
     if (get_process_name(&pid_file_buffer_pos, process->name, sizeof(process->name)) != 0) {
-        fprintf(stderr, "process_get: Failed to get process name: %s\n", strerror(errno));
-        free(process);
-        return NULL;
+        return -1;
     }
 
-    process->pid   = pid;
+    process->pid   = process->pid;
     process->uid   = file_info.st_uid;
     process->state = '\0';
 
@@ -211,10 +202,26 @@ Process* process_get(const unsigned int pid) {
                &process->start_time,
                &process->rss) < 5) {
         fprintf(stderr, "process_get: Failed to parse %s: %d. File must contain at least 5 numbers\n", pid_file_path, errno);
-        process_free(process);
+        return -1;
+    }
+
+    return 0;
+}
+
+Process* process_get(const unsigned int pid) {
+    Process*    process;
+
+    process = malloc(sizeof(Process));
+    if (process == NULL) {
         return NULL;
     }
 
+    process->pid = pid;
+    if (process_capture(process) != 0) {
+        fprintf(stderr, "process_get: Failed to capture process %u: %s\n", pid, strerror(errno));
+        process_free(process);
+        return NULL;
+    }
     return process;
 }
 

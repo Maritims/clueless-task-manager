@@ -1,3 +1,6 @@
+#include "ctm/ctm.h"
+
+#include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
 #include <limits.h>
@@ -5,43 +8,55 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "ctm/ctm.h"
-
 struct ProcessList {
-    unsigned int* pids;
-    size_t        count;
-    size_t        capacity;
+    HashMap* pid_map;
 };
 
-ProcessList* process_list_get(void) {
-    ProcessList*   process_list;
+typedef struct ProcessEntry {
+    Process* process;
+    bool     active;
+} ProcessEntry;
+
+ProcessList* process_list_alloc(void) {
+    ProcessList* process_list = malloc(sizeof(ProcessList));
+    if (process_list == NULL) {
+        return NULL;
+    }
+
+    process_list->pid_map = hash_map_create(sizeof(unsigned int), sizeof(ProcessEntry), hash_int, hash_compare_int);
+    if (process_list->pid_map == NULL) {
+        process_list_free(process_list);
+        return NULL;
+    }
+
+    return process_list;
+}
+
+void process_list_free(ProcessList* list) {
+    if (list) {
+        hash_map_free(list->pid_map);
+        free(list);
+    }
+}
+
+size_t process_list_refresh(ProcessList* list) {
     struct dirent* entry;
     DIR*           dir;
 
+    if (list == NULL) {
+        errno = EINVAL;
+        return 0;
+    }
     if ((dir = opendir("/proc")) == NULL) {
-        return NULL;
-    }
-    if ((process_list = malloc(sizeof(ProcessList))) == NULL) {
-        closedir(dir);
-        fprintf(stderr, "process_list_get: Failed to allocate memory for process list: %s\n", strerror(errno));
-        return NULL;
-    }
-
-    process_list->count    = 0;
-    process_list->capacity = 100;
-    if ((process_list->pids = malloc(process_list->capacity * sizeof(unsigned int))) == NULL) {
-        closedir(dir);
-        fprintf(stderr, "process_list_get: Failed to allocate memory for process list: %s\n", strerror(errno));
-        free(process_list);
-        return NULL;
+        return 0;
     }
 
     while ((entry = readdir(dir)) != NULL) {
-        char* end_ptr;
-        long  pid;
+        ProcessEntry* existing_process_entry;
+        char*         end_ptr;
+        long          pid;
 
-        if (entry->d_type != DT_DIR) {
-            /* The entry is not a directory */
+        if (!isdigit(entry->d_name[0])) {
             continue;
         }
 
@@ -53,63 +68,45 @@ ProcessList* process_list_get(void) {
         }
         if (pid == LONG_MAX || pid == LONG_MIN) {
             /* An underflow or an overflow occurred */
-            fprintf(stderr, "process_list_get: Failed to parse pid from /proc/%s: %s\n", entry->d_name, strerror(errno));
-            process_list_free(process_list);
-            return NULL;
+            errno = ERANGE;
+            return 0;
         }
         if (pid == 0) {
             /* Not a pid directory */
             continue;
         }
 
-        if (process_list->count == process_list->capacity) {
-            unsigned int* new_pids;
+        existing_process_entry = hash_map_get(list->pid_map, &pid);
+        if (existing_process_entry) {
+            existing_process_entry->active = process_capture(existing_process_entry->process) == 0 ? true : false;
+        } else {
+            ProcessEntry new_process_entry;
 
-            process_list->capacity *= 2;
-            new_pids               = realloc(process_list->pids, process_list->capacity * sizeof(unsigned int));
-            if (new_pids == NULL) {
-                fprintf(stderr, "process_list_get: Failed to allocate memory for process list: %s\n", strerror(errno));
-                process_list_free(process_list);
-                return NULL;
+            new_process_entry.active  = true;
+            new_process_entry.process = process_get(pid);
+            if (new_process_entry.process == NULL) {
+                fprintf(stderr, "process_list_refresh: Failed to capture process %lu: %s\n", pid, strerror(errno));
+                return 0;
             }
 
-            process_list->pids = new_pids;
+            if (hash_map_put(list->pid_map, &pid, &new_process_entry) != 0) {
+                const int error = errno;
+                process_free(new_process_entry.process);
+                errno = error;
+                return 0;
+            }
         }
-        process_list->pids[process_list->count++] = (unsigned int) pid;
     }
-
     closedir(dir);
-    return process_list;
+
+    return hash_map_count(list->pid_map);
 }
 
-void process_list_free(ProcessList* process_list) {
-    if (process_list) {
-        free(process_list->pids);
-        free(process_list);
-    }
-}
-
-size_t process_list_get_count(const ProcessList* process_list) {
-    if (process_list == NULL) {
-        fprintf(stderr, "process_list_get_count: Invalid argument: NULL\n");
+size_t process_list_get_count(const ProcessList* list) {
+    if (list == NULL) {
+        errno = EINVAL;
         return 0;
     }
-    return process_list->count;
+    return hash_map_count(list->pid_map);
 }
 
-Process* process_list_get_process(const ProcessList* process_list, const unsigned int pid) {
-    size_t i;
-
-    if (process_list == NULL) {
-        fprintf(stderr, "process_list_get_process: Invalid argument: NULL\n");
-        return NULL;
-    }
-
-    for (i = 0; i < process_list->count; i++) {
-        if (process_list->pids[i] == pid) {
-            return process_get(pid);
-        }
-    }
-
-    return NULL;
-}

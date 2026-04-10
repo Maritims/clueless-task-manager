@@ -15,6 +15,7 @@ int assert_unsigned_int_equality(unsigned int expected, unsigned int actual, con
 int assert_unsigned_long_equality(unsigned long expected, unsigned long actual, const char* message);
 int assert_null(const void* value, const char* message);
 int assert_not_null(const void* value, const char* message);
+int assert_string_equality(const char* expected, const char* actual, const char* message);
 
 int run_all_tests(const TestCase* test_cases, size_t test_count);
 

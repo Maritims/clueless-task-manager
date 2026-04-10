@@ -1,4 +1,4 @@
-#include "ctm/ring_buffer.h"
+#include "ctm/ctm.h"
 
 #include <errno.h>
 #include <stdlib.h>

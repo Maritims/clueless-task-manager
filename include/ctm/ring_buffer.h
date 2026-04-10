@@ -1,5 +1,10 @@
 #ifndef CTM_RING_BUFFER_H
 #define CTM_RING_BUFFER_H
+
+#ifndef INSIDE_CTM_H
+#error "Only ctm/ctm.h can be included directly!"
+#endif
+
 #include <stddef.h>
 
 typedef struct RingBuffer RingBuffer;

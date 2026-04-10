@@ -11,9 +11,10 @@
 
 typedef struct ProcessList ProcessList;
 
-ProcessList* process_list_get(void);
-void         process_list_free(ProcessList* process_list);
-size_t       process_list_get_count(const ProcessList* process_list);
-Process*     process_list_get_process(const ProcessList* process_list, unsigned int pid);
+ProcessList* process_list_alloc(void);
+void         process_list_free(ProcessList* list);
+size_t       process_list_refresh(ProcessList* list);
+size_t       process_list_get_count(const ProcessList* list);
+Process*     process_list_find_by_pid(const ProcessList* list, unsigned int pid);
 
 #endif

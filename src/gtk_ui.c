@@ -7,9 +7,13 @@
 #define CTM_APP_HEIGHT 600
 
 typedef struct {
-    GtkWidget* status_bar;
-    guint      context_id;
-    Sampler*   cpu_sampler;
+    GtkWidget* status_box;
+    GtkWidget* first_column;
+    GtkWidget* second_column;
+    GtkWidget* third_column;
+
+    Sampler*     cpu_sampler;
+    ProcessList* process_list;
 } AppContext;
 
 AppContext g_ctx;
@@ -19,15 +23,16 @@ static gboolean update_gtk_widgets(void* user_data) {
 
     (void) user_data;
 
-    /* Stop if the sampler has been nullified. It means we're shutting down. */
+    /* Stop if any of the samplers has been nullified. It means we're shutting down. */
     if (g_ctx.cpu_sampler == NULL) {
         return G_SOURCE_REMOVE;
     }
 
     if ((total_usage = sampler_get_value(g_ctx.cpu_sampler, 10, (SamplerProcessFunc) cpu_get_total_usage)) > 0) {
         char label_text[16];
-        snprintf(label_text, sizeof(label_text), "%Lg%%", (long double) total_usage / 1000.0);
-        gtk_statusbar_push(GTK_STATUSBAR(g_ctx.status_bar), g_ctx.context_id, label_text);
+        snprintf(label_text, sizeof(label_text), "CPU: %.1Lf%%", (long double) total_usage / 1000.0);
+        gtk_label_set_text(GTK_LABEL(g_ctx.second_column), label_text);
+
         return G_SOURCE_REMOVE;
     }
     if (errno == EAGAIN) {
@@ -49,6 +54,30 @@ int ui_update(void* user_data) {
     return 0;
 }
 
+static gboolean on_tick(GtkWidget* widget, GdkFrameClock* frame_clock, gpointer user_data) {
+    size_t process_count;
+
+    (void) user_data;
+    (void) frame_clock;
+    (void) widget;
+
+    if (g_ctx.process_list == NULL) {
+        return G_SOURCE_CONTINUE;
+    }
+
+    if ((process_count = process_list_refresh(g_ctx.process_list)) > 0) {
+        char label_text[32];
+        snprintf(label_text, sizeof(label_text), "Processes: %lu", process_count);
+        gtk_label_set_text(GTK_LABEL(g_ctx.first_column), label_text);
+    }
+
+    if (errno) {
+        fprintf(stderr, "on_tick: Failed to refresh process list: %s\n", strerror(errno));
+    }
+
+    return G_SOURCE_CONTINUE;
+}
+
 static void on_window_destroy(const GtkWidget* window, gpointer user_data) {
     (void) window;
     (void) user_data;
@@ -64,7 +93,11 @@ static void activate(GtkApplication* app, gpointer user_data) {
 
     (void) user_data;
 
-    g_ctx.cpu_sampler = sampler_create_with_subscription_and_start(500, cpu_size(), (SamplerCaptureFunc) cpu_capture, (SamplerCallback) ui_update);
+    g_ctx.cpu_sampler  = sampler_create_with_subscription_and_start(500, cpu_size(), (SamplerCaptureFunc) cpu_capture, (SamplerCallback) ui_update);
+    if ((g_ctx.process_list = process_list_alloc()) == NULL) {
+        fprintf(stderr, "Failed to allocate process list: %s\n", strerror(errno));
+        return;
+    }
 
     window = gtk_application_window_new(app);
     gtk_window_set_title(GTK_WINDOW(window), CTM_APP_TITLE);
@@ -80,9 +113,18 @@ static void activate(GtkApplication* app, gpointer user_data) {
     gtk_box_pack_start(GTK_BOX(vbox), label, TRUE, TRUE, 0);
 
     /* Status bar setup */
-    g_ctx.status_bar = gtk_statusbar_new();
-    g_ctx.context_id = gtk_statusbar_get_context_id(GTK_STATUSBAR(g_ctx.status_bar), "cpu_status");
-    gtk_box_pack_end(GTK_BOX(vbox), g_ctx.status_bar, FALSE, FALSE, 0);
+    g_ctx.status_box    = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 10);
+    g_ctx.first_column  = gtk_label_new("Processes: 0");
+    g_ctx.second_column = gtk_label_new("CPU Usage: 0%");
+    g_ctx.third_column  = gtk_label_new("Memory Usage: 0%");
+
+    gtk_box_pack_start(GTK_BOX(g_ctx.status_box), g_ctx.first_column, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(g_ctx.status_box), g_ctx.second_column, TRUE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(g_ctx.status_box), g_ctx.third_column, FALSE, FALSE, 5);
+
+    gtk_box_pack_end(GTK_BOX(vbox), g_ctx.status_box, FALSE, FALSE, 0);
+
+    gtk_widget_add_tick_callback(window, on_tick, NULL, NULL);
 
     gtk_widget_show_all(window);
 }
@@ -91,9 +133,11 @@ int ui_start(int argc, char** argv) {
     GtkApplication* app;
     int             status;
 
-    g_ctx.status_bar  = NULL;
-    g_ctx.context_id  = 0;
-    g_ctx.cpu_sampler = NULL;
+    g_ctx.status_box    = NULL;
+    g_ctx.first_column  = NULL;
+    g_ctx.second_column = NULL;
+    g_ctx.third_column  = NULL;
+    g_ctx.cpu_sampler   = NULL;
 
     app = gtk_application_new("no.clueless.ctm", G_APPLICATION_DEFAULT_FLAGS);
     g_signal_connect(app, "activate", G_CALLBACK(activate), NULL);
