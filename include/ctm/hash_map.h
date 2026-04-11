@@ -17,6 +17,7 @@ void     hash_map_free(HashMap* hash_map);
 size_t   hash_map_count(const HashMap* hash_map);
 int      hash_map_put(HashMap* hash_map, const void* key, const void* value);
 void*    hash_map_get(const HashMap* hash_map, const void* key);
+int      hash_map_remove(HashMap* hash_map, const void* key);
 
 /* hash functions */
 size_t hash_int(const void* key);
