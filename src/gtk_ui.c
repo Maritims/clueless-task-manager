@@ -69,9 +69,7 @@ static gboolean on_tick(GtkWidget* widget, GdkFrameClock* frame_clock, gpointer 
         char label_text[32];
         snprintf(label_text, sizeof(label_text), "Processes: %lu", process_count);
         gtk_label_set_text(GTK_LABEL(g_ctx.first_column), label_text);
-    }
-
-    if (errno) {
+    } else if (errno) {
         fprintf(stderr, "on_tick: Failed to refresh process list: %s\n", strerror(errno));
     }
 

@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "ctm/ring_buffer.h"
+#include "../../include/collections/ring_buffer.h"
 
 #define CTM_SAMPLER_CAPACITY 100
 

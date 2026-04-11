@@ -24,7 +24,8 @@ add_compile_options(
 
 include("${CMAKE_SOURCE_DIR}/cmake/functions.cmake")
 
-set(COMMON_SOURCES "src/ring_buffer.c" "src/hash_map.c")
+set(COLLECTIONS_SOURCES "src/array.c" "src/hash_map.c" "src/ring_buffer.c")
+set(COMMON_SOURCES ${COLLECTIONS_SOURCES})
 
 set(LINUX_SOURCES
         "src/linux/cpu.c"
