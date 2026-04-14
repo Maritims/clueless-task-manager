@@ -2,10 +2,6 @@
 #define CTM_HASH_MAP_H
 #include "stddef.h"
 
-#ifndef INSIDE_CTM_COLLECTIONS_H
-#error "Only collections/collections.h can be included directly!"
-#endif
-
 typedef size_t (*          HashFunc)(const void* key);
 typedef int (*             CompareFunc)(const void* a, const void* b);
 typedef struct HashEntry   HashEntry;

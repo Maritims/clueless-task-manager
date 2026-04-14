@@ -6,7 +6,7 @@
 #include <bits/local_lim.h>
 #include <sys/stat.h>
 
-#include "ctm/ctm.h"
+#include "metrics/process.h"
 
 #define PROCESS_NAME_MAX 16
 
@@ -209,7 +209,7 @@ int process_capture(Process* process) {
 }
 
 Process* process_get(const unsigned int pid) {
-    Process*    process;
+    Process* process;
 
     process = malloc(sizeof(Process));
     if (process == NULL) {

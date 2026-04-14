@@ -1,9 +1,5 @@
-#ifndef CTM_ARRAY_H
-#define CTM_ARRAY_H
-
-#ifndef INSIDE_CTM_COLLECTIONS_H
-#error "Only collections/collections.h can be included directly!"
-#endif
+#ifndef ARRAY_H
+#define ARRAY_H
 #include <stddef.h>
 
 typedef struct Array         Array;

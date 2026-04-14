@@ -1,5 +1,4 @@
-#include "ctm/ctm.h"
-
+#include "../include/collections/hash_map.h"
 #include "test.h"
 
 int test_create(void) {

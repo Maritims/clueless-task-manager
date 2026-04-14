@@ -1,5 +1,3 @@
-#include "ctm/ctm.h"
-
 #include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
@@ -8,13 +6,18 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "collections/array.h"
+#include "collections/hash_map.h"
+#include "metrics/process.h"
+#include "metrics/process_list.h"
+
 struct ProcessList {
-    HashMap* pid_map;
+    HashMap* process_map;
 };
 
 typedef struct ProcessEntry {
-    Process* process;
-    bool     active;
+    Process*     process;
+    unsigned int active;
 } ProcessEntry;
 
 ProcessList* process_list_alloc(void) {
@@ -23,8 +26,8 @@ ProcessList* process_list_alloc(void) {
         return NULL;
     }
 
-    process_list->pid_map = hash_map_create(sizeof(unsigned int), sizeof(ProcessEntry), hash_int, hash_compare_int);
-    if (process_list->pid_map == NULL) {
+    process_list->process_map = hash_map_create(sizeof(unsigned int), sizeof(ProcessEntry), hash_int, hash_compare_int);
+    if (process_list->process_map == NULL) {
         process_list_free(process_list);
         return NULL;
     }
@@ -34,7 +37,7 @@ ProcessList* process_list_alloc(void) {
 
 void process_list_free(ProcessList* list) {
     if (list) {
-        hash_map_free(list->pid_map);
+        hash_map_free(list->process_map);
         free(list);
     }
 }
@@ -45,13 +48,13 @@ static void mark_processes_inactive(HashMap* process_map) {
 
     while (hash_map_iter_next(iter, &key, &value) == 0) {
         ProcessEntry* process_entry = value;
-        process_entry->active       = false;
+        process_entry->active       = 0;
     }
 
     hash_map_iter_free(iter);
 }
 
-static void remove_inactive_processes(HashMap* process_map) {
+static void remove_inactive_processes(HashMap* process_map, ProcessListObserver* observer, void* user_data) {
     HashMapIter* iter;
     void *       key, *value;
     Array*       keys_to_remove;
@@ -70,6 +73,11 @@ static void remove_inactive_processes(HashMap* process_map) {
     for (i = 0; i < array_count(keys_to_remove); i++) {
         const void*         pid_key       = array_get(keys_to_remove, i);
         const ProcessEntry* process_entry = hash_map_get(process_map, pid_key);
+
+        if (observer && observer->on_process_removed) {
+            observer->on_process_removed(process_entry->process, user_data);
+        }
+
         if (process_entry) {
             process_free(process_entry->process);
         }
@@ -78,20 +86,20 @@ static void remove_inactive_processes(HashMap* process_map) {
     array_free(keys_to_remove);
 }
 
-size_t process_list_refresh(ProcessList* list) {
+int process_list_refresh(ProcessList* list, ProcessListObserver* observer, void* user_data, size_t* out_size) {
     struct dirent* entry;
     DIR*           dir;
 
     if (list == NULL) {
         errno = EINVAL;
-        return 0;
+        return -1;
     }
     if ((dir = opendir("/proc")) == NULL) {
-        return 0;
+        return -1;
     }
 
     /*  Mark all processes as inactive */
-    mark_processes_inactive(list->pid_map);
+    mark_processes_inactive(list->process_map);
 
     /* Update existing processes and add new processes */
     while ((entry = readdir(dir)) != NULL) {
@@ -114,41 +122,49 @@ size_t process_list_refresh(ProcessList* list) {
             /* An underflow or an overflow occurred */
             errno = ERANGE;
             closedir(dir);
-            return 0;
+            return -1;
         }
         if (pid == 0) {
             /* Not a pid directory */
             continue;
         }
 
-        upid = (unsigned int) pid;
-        existing_process_entry = hash_map_get(list->pid_map, &upid);
+        upid                   = (unsigned int) pid;
+        existing_process_entry = hash_map_get(list->process_map, &upid);
         if (existing_process_entry) {
-            existing_process_entry->active = process_capture(existing_process_entry->process) == 0 ? true : false;
+            existing_process_entry->active = process_capture(existing_process_entry->process) == 0 ? 1 : 0;
+            if (observer && observer->on_process_updated) {
+                observer->on_process_updated(existing_process_entry->process, user_data);
+            }
         } else {
             ProcessEntry new_process_entry;
 
-            new_process_entry.active  = true;
+            new_process_entry.active  = 1;
             new_process_entry.process = process_get(upid);
             if (new_process_entry.process == NULL) {
                 fprintf(stderr, "process_list_refresh: Failed to capture process %d: %s\n", upid, strerror(errno));
-                return 0;
+                return -1;
             }
 
-            if (hash_map_put(list->pid_map, &upid, &new_process_entry) != 0) {
+            if (hash_map_put(list->process_map, &upid, &new_process_entry) != 0) {
                 const int error = errno;
                 process_free(new_process_entry.process);
                 errno = error;
-                return 0;
+                return -1;
+            }
+
+            if (observer && observer->on_process_added) {
+                observer->on_process_added(new_process_entry.process, user_data);
             }
         }
     }
     closedir(dir);
 
     /* Remove inactive processes */
-    remove_inactive_processes(list->pid_map);
+    remove_inactive_processes(list->process_map, observer, user_data);
 
-    return hash_map_count(list->pid_map);
+    *out_size = hash_map_count(list->process_map);
+    return 0;
 }
 
 size_t process_list_get_count(const ProcessList* list) {
@@ -156,6 +172,28 @@ size_t process_list_get_count(const ProcessList* list) {
         errno = EINVAL;
         return 0;
     }
-    return hash_map_count(list->pid_map);
+    return hash_map_count(list->process_map);
 }
 
+int process_list_foreach(const ProcessList* list, const ProcessListForeachFunc foreach_func) {
+    HashMapIter* iter;
+    void *       key, *value;
+
+    if (list == NULL || foreach_func == NULL) {
+        errno = EINVAL;
+        return -1;
+    }
+
+    iter = hash_map_iter_create(list->process_map);
+    while (hash_map_iter_next(iter, &key, &value) == 0) {
+        ProcessEntry* process_entry;
+        int           foreach_func_result;
+
+        process_entry = value;
+        if ((foreach_func_result = foreach_func(process_entry->process)) != 0) {
+            return foreach_func_result;
+        }
+    }
+
+    return 0;
+}

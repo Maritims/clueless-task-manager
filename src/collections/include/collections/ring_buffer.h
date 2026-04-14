@@ -1,9 +1,5 @@
-#ifndef CTM_RING_BUFFER_H
-#define CTM_RING_BUFFER_H
-
-#ifndef INSIDE_CTM_COLLECTIONS_H
-#error "Only collections/collections.h can be included directly!"
-#endif
+#ifndef RING_BUFFER_H
+#define RING_BUFFER_H
 
 #include <stddef.h>
 

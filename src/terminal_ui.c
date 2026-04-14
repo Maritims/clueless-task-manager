@@ -2,7 +2,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "ctm/ctm.h"
+#include "metrics/cpu.h"
+#include "metrics/sampler.h"
 
 int ui_update(void* user_data) {
     Sampler* sampler;

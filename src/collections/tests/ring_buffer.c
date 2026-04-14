@@ -2,7 +2,7 @@
 
 #include <errno.h>
 
-#include "test.h"
+#include "../../../tests/test.h"
 
 int test_alloc(void) {
     /* arrange */

@@ -1,5 +1,5 @@
+#include "metrics/memory.h"
 #include "test.h"
-#include "ctm/ctm.h"
 
 static int test_get(void) {
     /* arrange */
@@ -21,7 +21,7 @@ static int test_get(void) {
 
 int main(void) {
     const TestCase test_cases[] = {
-        {"test_alloc", test_get}
+        {"memory_get", test_get}
     };
     const size_t test_count = sizeof(test_cases) / sizeof(test_cases[0]);
     return run_all_tests(test_cases, test_count);

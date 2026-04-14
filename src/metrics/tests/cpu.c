@@ -1,8 +1,7 @@
-#include <stdio.h>
 #include <unistd.h>
 
-#include "../test.h"
-#include "ctm/ctm.h"
+#include "metrics/cpu.h"
+#include "test.h"
 
 int test_get(void) {
     /* arrange */

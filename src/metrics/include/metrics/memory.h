@@ -1,9 +1,5 @@
-#ifndef CTM_MEMORY_H
-#define CTM_MEMORY_H
-
-#ifndef INSIDE_CTM_H
-#error "Only ctm/ctm.h can be included directly!"
-#endif
+#ifndef MEM_METRICS_H
+#define MEM_METRICS_H
 
 typedef struct Memory Memory;
 

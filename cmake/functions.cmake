@@ -3,7 +3,7 @@ function(add_ctm_test TEST_NAME)
     set(TEST_SOURCES ${ARGN})
 
     # We always want the test utility (test.c) included
-    set(TEST_UTIL_SRC "tests/test.c")
+    set(TEST_UTIL_SRC "${CMAKE_SOURCE_DIR}/tests/test.c")
 
     # Create the executable
     add_executable(${TEST_NAME} ${TEST_UTIL_SRC} ${TEST_SOURCES})

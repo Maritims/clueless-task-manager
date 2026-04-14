@@ -1,6 +1,5 @@
 #include <stdio.h>
-
-#include "ctm/ctm.h"
+#include "ui.h"
 
 void cui_format_duration(const unsigned long time_in_ms, char* buffer, const size_t buffer_size) {
     unsigned int hours, minutes, seconds;

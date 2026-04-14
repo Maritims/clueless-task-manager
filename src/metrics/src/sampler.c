@@ -1,4 +1,4 @@
-#include "ctm/ctm.h"
+#include "metrics/sampler.h"
 
 #include <errno.h>
 #include <pthread.h>
@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../../include/collections/ring_buffer.h"
+#include "../../collections/include/collections/ring_buffer.h"
 
 #define CTM_SAMPLER_CAPACITY 100
 

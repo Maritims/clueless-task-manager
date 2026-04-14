@@ -1,9 +1,6 @@
 #ifndef CTM_PROCESS_H
 #define CTM_PROCESS_H
-
-#ifndef INSIDE_CTM_H
-#error "Only ctm/ctm.h can be included directly!"
-#endif
+#include <stddef.h>
 
 typedef struct Process Process;
 

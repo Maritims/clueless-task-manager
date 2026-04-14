@@ -8,10 +8,6 @@
 #ifndef CTM_SOUND_H
 #define CTM_SOUND_H
 
-#ifndef INSIDE_CTM_H
-#error "Only ctm/ctm.h can be included directly!"
-#endif
-
 typedef struct CtmAudioStreamSource CtmAudioStreamSource;
 typedef void (*                     CtmSoundCallback)(CtmAudioStreamSource* audio_stream_source, void* user_data);
 

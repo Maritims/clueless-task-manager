@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "ctm/ctm.h"
+#include "metrics/cpu.h"
 
 struct CPU {
     unsigned long user;

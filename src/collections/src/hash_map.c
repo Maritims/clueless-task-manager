@@ -1,4 +1,4 @@
-#include "collections/collections.h"
+#include "../include/collections/hash_map.h"
 
 #include <errno.h>
 #include <stdlib.h>
@@ -8,6 +8,7 @@
 static char tombstone_placeholder;
 #define TOMBSTONE (&tombstone_placeholder)
 #define MINIMUM_CAPACITY 16
+#define KNUTHS_CONSTANT 2654435761U
 
 struct HashEntry {
     void* key;
@@ -243,7 +244,7 @@ size_t hash_int(const void* key) {
     const int pid = *(const int *) key;
 
     /* A simple multiplicative hash to distribute PIDs better across buckets */
-    return (size_t) pid * 2654435761U;
+    return (size_t) pid * KNUTHS_CONSTANT;
 }
 
 int hash_compare_int(const void* a, const void* b) {

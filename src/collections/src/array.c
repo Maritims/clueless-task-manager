@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "collections/collections.h"
+#include "../include/collections/array.h"
 
 #define MINIMUM_CAPACITY 100
 
