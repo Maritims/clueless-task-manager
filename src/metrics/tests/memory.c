@@ -1,7 +1,7 @@
 #include "metrics/memory.h"
 #include "test.h"
 
-static int test_get(void) {
+TEST(get) {
     /* arrange */
     int     success;
     Memory* actual;
@@ -19,10 +19,7 @@ static int test_get(void) {
     return success;
 }
 
-int main(void) {
-    const TestCase test_cases[] = {
-        {"memory_get", test_get}
-    };
-    const size_t test_count = sizeof(test_cases) / sizeof(test_cases[0]);
-    return run_all_tests(test_cases, test_count);
-}
+#define TESTS \
+    TEST_CASE(get)
+
+RUN_TEST_SUITE(TESTS)

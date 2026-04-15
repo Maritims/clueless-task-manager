@@ -3,7 +3,7 @@
 #include "metrics/cpu.h"
 #include "test.h"
 
-int test_get(void) {
+TEST(get) {
     /* arrange */
     int  success;
     CPU* actual;
@@ -18,7 +18,7 @@ int test_get(void) {
     return success;
 }
 
-int test_get_total_usage(void) {
+TEST(get_total_usage) {
     /* arrange */
     int  success;
     CPU *current, *previous;
@@ -37,11 +37,8 @@ int test_get_total_usage(void) {
     return success;
 }
 
-int main(void) {
-    const TestCase test_cases[] = {
-        {"cpu_get", test_get},
-        {"get_total_usage", test_get_total_usage}
-    };
-    const size_t test_count = sizeof(test_cases) / sizeof(test_cases[0]);
-    return run_all_tests(test_cases, test_count);
-}
+#define TESTS \
+    TEST_CASE(get)\
+    TEST_CASE(get_total_usage)
+
+RUN_TEST_SUITE(TESTS)
