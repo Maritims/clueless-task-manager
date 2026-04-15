@@ -1,4 +1,4 @@
-#include "../include/collections/hash_map.h"
+#include "collections/hash_map.h"
 
 #include <errno.h>
 #include <stdlib.h>

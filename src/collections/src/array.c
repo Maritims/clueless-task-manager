@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../include/collections/array.h"
+#include "collections/array.h"
 
 #define MINIMUM_CAPACITY 100
 
@@ -11,11 +11,6 @@ struct Array {
     size_t capacity;
     size_t element_size;
     void** data;
-};
-
-struct ArrayIterator {
-    Array* array;
-    size_t index;
 };
 
 Array* array_create(void) {
@@ -92,45 +87,5 @@ int array_remove(Array* array, const size_t index) {
 
     array->count--;
     array->data[array->count] = NULL;
-    return 0;
-}
-
-ArrayIterator* array_iter_create(Array* array) {
-    ArrayIterator* iter;
-
-    if (array == NULL) {
-        errno = EINVAL;
-        return NULL;
-    }
-
-    if ((iter = malloc(sizeof(ArrayIterator))) == NULL) {
-        return NULL;
-    }
-
-    iter->array = array;
-    iter->index = 0;
-
-    return iter;
-}
-
-void array_iter_free(ArrayIterator* iter) {
-    if (iter) {
-        free(iter);
-    }
-}
-
-int array_iter_next(ArrayIterator* iter, size_t* index, void** element) {
-    if (iter == NULL || index == NULL || element == NULL) {
-        errno = EINVAL;
-        return -1;
-    }
-    if (iter->index >= iter->array->count) {
-        errno = ERANGE;
-        return -1;
-    }
-
-    *index   = iter->index++;
-    *element = iter->array->data[*index];
-
     return 0;
 }
