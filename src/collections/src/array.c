@@ -4,13 +4,20 @@
 
 #include "collections/array.h"
 
+/**
+ * @brief The minimum capacity for newly initialized arrays.
+ */
 #define MINIMUM_CAPACITY 100
 
+/**
+ * @struct Array
+ * @brief Internal representation of the dynamic array.
+ * * The array grows exponentially by a factor of 2 when capacity is reached.
+ */
 struct Array {
-    size_t count;
-    size_t capacity;
-    size_t element_size;
-    void** data;
+    size_t count;    /**< Number of elements currently in use. */
+    size_t capacity; /**< Total allocated slots in the data buffer. */
+    void** data;     /**< The data buffer. */
 };
 
 Array* array_create(void) {
@@ -22,7 +29,7 @@ Array* array_create(void) {
 
     array->count    = 0;
     array->capacity = MINIMUM_CAPACITY;
-    if ((array->data = calloc(array->capacity, sizeof(void*))) == NULL) {
+    if ((array->data = calloc(array->capacity, sizeof(void *))) == NULL) {
         free(array);
         return NULL;
     }
@@ -55,7 +62,7 @@ int array_add(Array* array, void* element) {
         void** new_data;
 
         new_capacity = array->capacity * 2;
-        new_data     = realloc(array->data, new_capacity * sizeof(void*));
+        new_data     = realloc(array->data, new_capacity * sizeof(void *));
         if (new_data == NULL) {
             return -1;
         }
@@ -82,7 +89,7 @@ int array_remove(Array* array, const size_t index) {
     }
 
     if (index < array->count - 1) {
-        memmove(&array->data[index], &array->data[index + 1], (array->count - index - 1) * sizeof(void*));
+        memmove(&array->data[index], &array->data[index + 1], (array->count - index - 1) * sizeof(void *));
     }
 
     array->count--;

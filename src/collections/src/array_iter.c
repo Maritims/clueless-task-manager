@@ -3,9 +3,13 @@
 
 #include "collections/array.h"
 
+/**
+ * @struct ArrayIterator
+ * @brief Internal representation of the array iterator.
+ */
 struct ArrayIterator {
-    Array* array;
-    size_t index;
+    Array* array; /**< The array. */
+    size_t index; /**< The current index. */
 };
 
 ArrayIterator* array_iter_create(Array* array) {

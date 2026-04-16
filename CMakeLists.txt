@@ -22,6 +22,8 @@ add_compile_options(
         -pedantic               # Enforce strict ISO C90 compliance.
 )
 
+enable_testing()
+
 include("${CMAKE_SOURCE_DIR}/cmake/functions.cmake")
 
 add_subdirectory(src/collections)
@@ -50,5 +52,3 @@ if(GTK3_FOUND)
 else()
     message(STATUS "GTK3 not found - ctm-gui target will not be built")
 endif ()
-
-enable_testing()
