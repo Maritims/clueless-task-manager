@@ -65,6 +65,7 @@ Sampler* sampler_create(const unsigned int interval_ms, const size_t item_size, 
     int      mutex_init_result;
 
     if (item_size == 0 || capture_fn == NULL) {
+        fprintf(stderr, "ctm_sampler_create: item_size or capture_fn is NULL\n");
         errno = EINVAL;
         return NULL;
     }

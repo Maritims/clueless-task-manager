@@ -2,14 +2,16 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "logging.h"
 #include "metrics/cpu.h"
 #include "metrics/sampler.h"
 
-int ui_update(void* user_data) {
+int queue_ui_update(void* user_data) {
     Sampler* sampler;
     long     usage;
 
     if (user_data == NULL) {
+        LOG_ERROR("ui_update", ("user_data cannot be NULL"));
         errno = EINVAL;
         return -1;
     }
@@ -40,7 +42,7 @@ int ui_start(int argc, char** argv) {
     cpu_sampler = sampler_create_with_subscription_and_start(500,
                                                              cpu_size(),
                                                              (SamplerCaptureFunc) cpu_capture,
-                                                             (SamplerCallback) ui_update);
+                                                             (SamplerCallback) queue_ui_update);
     if (cpu_sampler == NULL) {
         fprintf(stderr, "Failed to create and start CPU sampler: %s\n", strerror(errno));
         return -1;

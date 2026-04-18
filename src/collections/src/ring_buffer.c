@@ -1,8 +1,10 @@
-#include "../include/collections/ring_buffer.h"
+#include "collections/ring_buffer.h"
 
 #include <errno.h>
+#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+
+#include "logging.h"
 
 struct RingBuffer {
     /**
@@ -70,13 +72,20 @@ void* ring_buffer_peek(const RingBuffer* ring_buffer, const size_t offset) {
     size_t idx;
 
     if (offset >= ring_buffer->count) {
-        errno = EINVAL;
+#ifdef RING_BUFFER_LOG_WHEN_OFFSET_EXCEEDS_COUNT
+        LOG_ERROR("ring_buffer_peek", "Offset is greater than the number of items in the buffer");
+#endif
+#ifdef RING_BUFFER_SIGNAL_RETRY_WHEN_OFFSET_EXCEEDS_COUNT
+        errno = EAGAIN;
+#else
+        errno= EINVAL;
+#endif
         return NULL;
     }
 
     idx = (ring_buffer->head + ring_buffer->capacity - offset) % ring_buffer->capacity;
 
-    return (void*)(ring_buffer->buffer + (idx * ring_buffer->item_size));
+    return (void *) (ring_buffer->buffer + (idx * ring_buffer->item_size));
 }
 
 size_t ring_buffer_get_capacity(const RingBuffer* ring_buffer) {

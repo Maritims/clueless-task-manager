@@ -38,7 +38,7 @@ void memory_free(Memory* memory);
 unsigned long memory_get_total(const Memory* memory);
 
 /**
- * @brief Retrieves the amount of completely unused memory (free) from the snapshot.
+ * @brief Retrieves the amount of completely    unused memory (free) from the snapshot.
  * @param memory The memory snapshot to query.
  * @return Free physical memory in kilobytes (KB).
  */

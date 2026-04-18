@@ -45,13 +45,13 @@ typedef struct ProcessListObserver {
  * @retval Pointer to the allocated ProcessList on success.
  * @retval NULL if memory allocation fails.
  */
-ProcessList* process_list_alloc(void);
+ProcessList* process_list_create(void);
 
 /**
  * @brief Frees the ProcessList and all internally managed Process snapshots.
  * @param list Pointer to the ProcessList to be deallocated.
  */
-void process_list_free(ProcessList* list);
+void process_list_destroy(ProcessList* list);
 
 /**
  * @brief Synchronizes the ProcessList with the current system state.

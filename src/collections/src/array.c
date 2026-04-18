@@ -4,6 +4,8 @@
 
 #include "collections/array.h"
 
+#include <stdio.h>
+
 /**
  * @brief The minimum capacity for newly initialized arrays.
  */
@@ -46,6 +48,7 @@ void array_free(Array* array) {
 
 size_t array_count(const Array* array) {
     if (array == NULL) {
+        fprintf(stderr, "array_count: array is NULL\n");
         errno = EINVAL;
         return 0;
     }
@@ -54,6 +57,7 @@ size_t array_count(const Array* array) {
 
 int array_add(Array* array, void* element) {
     if (array == NULL || element == NULL) {
+        fprintf(stderr, "array_add: array or element is NULL\n");
         errno = EINVAL;
         return -1;
     }

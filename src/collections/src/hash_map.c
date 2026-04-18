@@ -1,6 +1,7 @@
 #include "collections/hash_map.h"
 
 #include <errno.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -118,6 +119,7 @@ int hash_map_put(HashMap* hash_map, const void* key, const void* value) {
     size_t index, start_index, first_tombstone_index;
 
     if (hash_map == NULL || key == NULL || value == NULL) {
+        fprintf(stderr, "hash_map_put: hash_map, key or value is NULL\n");
         errno = EINVAL;
         return -1;
     }

@@ -18,6 +18,12 @@
  */
 typedef struct Process Process;
 
+typedef enum {
+    PROCESS_CAPTURE_OK,
+    PROCESS_CAPTURE_NOT_FOUND,
+    PROCESS_CAPTURE_ERROR
+} ProcessCaptureResult;
+
 /**
  * @brief Allocates memory for a new Process snapshot structure.
  * @retval Pointer to the allocated Process struct on success.
@@ -30,10 +36,11 @@ Process* process_alloc(void);
  * @details The target process is typically identified by the PID already
  * stored within the structure or set via implementation-specific means.
  * @param process Pointer to an allocated Process structure.
- * @retval 0 on success.
- * @retval Non-zero error code if the process cannot be found or accessed.
+ * @retval PROCESS_CAPTURE_OK on success.
+ * @retval PROCESS_CAPTURE_NOT_FOUND if the process cannot found.
+ * @retval PROCESS_CAPTURE_ERROR if the process cannot be accessed.
  */
-int process_capture(Process* process);
+ProcessCaptureResult process_capture(Process* process);
 
 /**
  * @brief Convenience function that allocates and captures data for a specific PID.

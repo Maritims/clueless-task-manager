@@ -11,6 +11,8 @@
 #include "metrics/process.h"
 #include "metrics/process_list.h"
 
+#include "../../logging/include/logging.h"
+
 struct ProcessList {
     HashMap* process_map;
 };
@@ -20,7 +22,7 @@ typedef struct ProcessEntry {
     unsigned int active;
 } ProcessEntry;
 
-ProcessList* process_list_alloc(void) {
+ProcessList* process_list_create(void) {
     ProcessList* process_list = malloc(sizeof(ProcessList));
     if (process_list == NULL) {
         return NULL;
@@ -28,14 +30,14 @@ ProcessList* process_list_alloc(void) {
 
     process_list->process_map = hash_map_create(sizeof(unsigned int), sizeof(ProcessEntry), hash_int, hash_compare_int);
     if (process_list->process_map == NULL) {
-        process_list_free(process_list);
+        process_list_destroy(process_list);
         return NULL;
     }
 
     return process_list;
 }
 
-void process_list_free(ProcessList* list) {
+void process_list_destroy(ProcessList* list) {
     if (list) {
         hash_map_free(list->process_map);
         free(list);
@@ -74,11 +76,10 @@ static void remove_inactive_processes(HashMap* process_map, ProcessListObserver*
         const void*         pid_key       = array_get(keys_to_remove, i);
         const ProcessEntry* process_entry = hash_map_get(process_map, pid_key);
 
-        if (observer && observer->on_process_removed) {
-            observer->on_process_removed(process_entry->process, user_data);
-        }
-
         if (process_entry) {
+            if (observer && observer->on_process_removed) {
+                observer->on_process_removed(process_entry->process, user_data);
+            }
             process_free(process_entry->process);
         }
         hash_map_remove(process_map, pid_key);
@@ -91,10 +92,12 @@ int process_list_refresh(ProcessList* list, ProcessListObserver* observer, void*
     DIR*           dir;
 
     if (list == NULL) {
+        fprintf(stderr, "process_list_refresh: Invalid argument\n");
         errno = EINVAL;
         return -1;
     }
     if ((dir = opendir("/proc")) == NULL) {
+        fprintf(stderr, "process_list_refresh: Failed to open /proc: %s\n", strerror(errno));
         return -1;
     }
 
@@ -132,9 +135,19 @@ int process_list_refresh(ProcessList* list, ProcessListObserver* observer, void*
         upid                   = (unsigned int) pid;
         existing_process_entry = hash_map_get(list->process_map, &upid);
         if (existing_process_entry) {
-            existing_process_entry->active = process_capture(existing_process_entry->process) == 0 ? 1 : 0;
-            if (observer && observer->on_process_updated) {
-                observer->on_process_updated(existing_process_entry->process, user_data);
+            const int process_capture_result = process_capture(existing_process_entry->process);
+            existing_process_entry->active   = process_capture_result == 0 ? 1 : 0;
+
+            if (process_capture_result == 0) {
+                if (observer && observer->on_process_updated) {
+                    observer->on_process_updated(existing_process_entry->process, user_data);
+                }
+            } else if (process_capture_result == 1) {
+                observer->on_process_removed(existing_process_entry->process, user_data);
+                hash_map_remove(list->process_map, &upid);
+            } else {
+                fprintf(stderr, "process_list_refresh: Failed to capture process %d: %s\n", upid, strerror(errno));
+                return -1;
             }
         } else {
             ProcessEntry new_process_entry;
@@ -142,6 +155,11 @@ int process_list_refresh(ProcessList* list, ProcessListObserver* observer, void*
             new_process_entry.active  = 1;
             new_process_entry.process = process_get(upid);
             if (new_process_entry.process == NULL) {
+                if (errno == ENOENT) {
+                    /* The process was not found. It probably died and was cleaned up by the operating system. */
+                    continue;
+                }
+
                 fprintf(stderr, "process_list_refresh: Failed to capture process %d: %s\n", upid, strerror(errno));
                 return -1;
             }
@@ -169,6 +187,7 @@ int process_list_refresh(ProcessList* list, ProcessListObserver* observer, void*
 
 size_t process_list_get_count(const ProcessList* list) {
     if (list == NULL) {
+        LOG_ERROR("process_list_get_count", "list cannot be NULL");
         errno = EINVAL;
         return 0;
     }

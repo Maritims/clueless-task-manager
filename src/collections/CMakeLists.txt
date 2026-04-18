@@ -7,6 +7,8 @@ add_library(collections STATIC
 
 target_include_directories(collections PUBLIC include)
 
+target_link_libraries(collections PRIVATE logging)
+
 add_ctm_test(TestArray "tests/array.c" "src/array.c")
 target_link_libraries(TestArray collections)
 
