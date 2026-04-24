@@ -12,8 +12,12 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 
+set(CTM_UI "tui" CACHE STRING "UI backend to build: tui, gtk, win9x")
+set_property(CACHE CTM_UI PROPERTY STRINGS tui gtk win9x)
+
 find_package(PkgConfig REQUIRED)
 find_package(Threads REQUIRED)
+find_package(Curses REQUIRED)
 
 add_compile_options(
         -Wall                   # Enable most common warnings.
@@ -26,38 +30,78 @@ enable_testing()
 
 include("${CMAKE_SOURCE_DIR}/cmake/functions.cmake")
 
-add_subdirectory(src/logging)
-add_subdirectory(src/collections)
-add_subdirectory(src/metrics)
+add_subdirectory(libs/log)
+add_subdirectory(libs/collections)
 
-add_executable(${PROJECT_NAME}
-        src/main.c
-        src/terminal_ui.c
-        ${UI_SRC}
+add_executable(${PROJECT_NAME} "src/main.c"
+        "src/ctm_cpu_metrics.c"
+        "src/ctm_cpu_metrics_internal.h"
+        "src/ctm_memory_metrics.c"
+        "src/ctm_process_metrics.c"
+        "src/ctm_process_manager.c"
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-target_link_libraries(${PROJECT_NAME}
-        PRIVATE logging
-        PRIVATE collections
-        PRIVATE metrics
-)
+if (CTM_UI STREQUAL "tui")
+    message(STATUS "Building TUI backend")
 
-pkg_check_modules(GTK3 IMPORTED_TARGET gtk+-3.0)
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+            C_STANDARD 99
+            C_STANDARD_REQUIRED ON
+    )
 
-if (GTK3_FOUND)
-    add_executable(ctm-gui
-            "src/main.c"
-            "src/gtk_ui.c"
-            "src/gtk_app_context.c"
-            "src/gtk_status_bar.c"
-            "src/gtk_process_tab.c"
-            ${COMMON_SOURCES}
-            ${LINUX_SOURCES})
-    target_compile_definitions(ctm-gui PRIVATE USE_GTK)
-    target_include_directories(ctm-gui PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-    target_link_libraries(ctm-gui PRIVATE Threads::Threads PkgConfig::GTK3 logging collections metrics)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE CTM_UI_TUI=1)
+    target_sources(${PROJECT_NAME} PRIVATE
+            "src/tui/ui.c"
+            "src/tui/process_tab.c"
+    )
+    target_include_directories(${PROJECT_NAME} PRIVATE ${CURSES_INCLUDE_DIRS})
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${CURSES_LIBRARIES} panel)
+
+elseif (CTM_UI STREQUAL "gtk")
+    pkg_check_modules(GTK3 REQUIRED IMPORTED_TARGET gtk+-3.0)
+
+    message(STATUS "Building GTK backend")
+    target_sources(${PROJECT_NAME} PRIVATE
+            "src/gtk_ui/ui.c"
+            "src/gtk_ui/app_context.c"
+            "src/gtk_ui/status_bar.c"
+            "src/gtk_ui/process_tab.c")
+
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+            C_STANDARD 99
+            C_STANDARD_REQUIRED ON
+    )
+
+    target_compile_definitions(${PROJECT_NAME} PRIVATE CTM_UI_GTK=1)
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+            Threads::Threads
+            PkgConfig::GTK3
+            log_lib
+            collections_lib
+            metrics_lib)
+
+elseif (CTM_UI STREQUAL "win9x")
+    message(STATUS "Building Win9x backend")
+    target_compile_definitions(${PROJECT_NAME} PRIVATE CTM_UI_WIN9X=1)
+    target_sources(${PROJECT_NAME} PRIVATE
+            "src/win9x_ui/main.c"
+            "src/win9x_ui/sound.c"
+    )
 else ()
-    message(STATUS "GTK3 not found - ctm-gui target will not be built")
+    message(FATAL_ERROR "Unknown CTM_UI value: ${CTM_UI}")
 endif ()
+
+add_ctm_test(TestCpuMetrics "tests/ctm_cpu_metrics.c"
+        "src/ctm_cpu_metrics_internal.h"
+        "src/ctm_cpu_metrics.c"
+)
+add_ctm_test(TestMemoryMetrics "tests/ctm_memory_metrics.c"
+        "src/ctm_memory_metrics_internal.h"
+        "src/ctm_memory_metrics.c"
+)
+add_ctm_test(TestProcessMetrics "tests/ctm_process_metrics.c"
+        "src/ctm_process_metrics_internal.h"
+        "src/ctm_process_metrics.c"
+)
