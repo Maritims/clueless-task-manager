@@ -1,6 +1,6 @@
 #include "ctm_memory_metrics.h"
 #include "test.h"
-#include "../src/ctm_memory_metrics_internal.h"
+#include "../src/internal/ctm_memory_metrics_internal.h"
 
 TEST(read) {
     /* arrange */

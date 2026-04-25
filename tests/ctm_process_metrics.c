@@ -1,6 +1,6 @@
 #include "ctm_process_metrics.h"
 
-#include "../src/ctm_process_metrics_internal.h"
+#include "../src/internal/ctm_process_metrics_internal.h"
 
 #include "ctm_types.h"
 #include "test.h"

@@ -4,7 +4,7 @@
 
 #include <limits.h>
 
-#include "../src/ctm_cpu_metrics_internal.h"
+#include "../src/internal/ctm_cpu_metrics_internal.h"
 #include "test.h"
 
 TEST(read) {
