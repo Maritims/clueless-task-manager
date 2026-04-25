@@ -9,7 +9,7 @@
 #include "core/list.h"
 #include "internal/ctm_process_metrics_internal.h"
 
-static ctm_process_manager_status_t mark_processes_inactive(const ctm_list_node_t* process_metrics_list) {
+static ctm_process_manager_status_t mark_processes_inactive(ctm_list_node_t* process_metrics_list) {
     ctm_list_node_t*       curr;
     ctm_process_metrics_t* process_metrics;
 
@@ -20,7 +20,6 @@ static ctm_process_manager_status_t mark_processes_inactive(const ctm_list_node_
     ctm_list_for_each(curr, process_metrics_list) {
         process_metrics            = ctm_list_entry(curr, ctm_process_metrics_t, node);
         process_metrics->is_active = 0;
-        curr                       = curr->next;
     }
 
     return CTM_PROCESS_MANAGER_SUCCESS;
@@ -28,16 +27,17 @@ static ctm_process_manager_status_t mark_processes_inactive(const ctm_list_node_
 
 static ctm_process_manager_status_t remove_inactive_processes(ctm_list_node_t* process_metrics_list, ProcessManagerCallback on_process_removed) {
     ctm_list_node_t*       curr;
+    ctm_list_node_t*       n;
     ctm_process_metrics_t* process_metrics;
 
     if (process_metrics_list == NULL) {
         return CTM_PROCESS_MANAGER_ERR_INVALID_ARG;
     }
 
-    ctm_list_for_each(curr, process_metrics_list) {
+    ctm_list_for_each_safe(curr, n, process_metrics_list) {
         process_metrics = ctm_list_entry(curr, ctm_process_metrics_t, node);
         if (!process_metrics->is_active) {
-            curr = curr->next;
+            ctm_list_del(curr);
             if (on_process_removed) {
                 on_process_removed(process_metrics);
             }
@@ -48,7 +48,7 @@ static ctm_process_manager_status_t remove_inactive_processes(ctm_list_node_t* p
     return CTM_PROCESS_MANAGER_SUCCESS;
 }
 
-static ctm_process_manager_status_t find_process_by_pid(const ctm_list_node_t* process_metrics_list, const unsigned int pid, ctm_process_metrics_t* out_value) {
+static ctm_process_manager_status_t find_process_by_pid(ctm_list_node_t* process_metrics_list, const unsigned int pid, ctm_process_metrics_t** out_value) {
     ctm_list_node_t*       curr;
     ctm_process_metrics_t* process_metrics;
 
@@ -59,7 +59,7 @@ static ctm_process_manager_status_t find_process_by_pid(const ctm_list_node_t* p
     ctm_list_for_each(curr, process_metrics_list) {
         process_metrics = ctm_list_entry(curr, ctm_process_metrics_t, node);
         if (process_metrics->pid == pid) {
-            *out_value = *process_metrics;
+            *out_value = process_metrics;
             return CTM_PROCESS_MANAGER_SUCCESS;
         }
     }
@@ -67,7 +67,7 @@ static ctm_process_manager_status_t find_process_by_pid(const ctm_list_node_t* p
     return CTM_PROCESS_MANAGER_ERR_NOT_FOUND;
 }
 
-ctm_process_manager_status_t process_manager_refresh(ctm_process_metrics_t*       process_metrics_list,
+ctm_process_manager_status_t process_manager_refresh(ctm_list_node_t*              process_metrics_list,
                                                      const size_t                 process_metrics_arr_len,
                                                      const ProcessManagerCallback on_process_added,
                                                      const ProcessManagerCallback on_process_updated,
@@ -75,7 +75,9 @@ ctm_process_manager_status_t process_manager_refresh(ctm_process_metrics_t*     
     struct dirent* entry;
     DIR*           dir;
 
-    if (process_metrics_list == NULL || process_metrics_arr_len == 0) {
+    (void) process_metrics_arr_len;
+
+    if (process_metrics_list == NULL) {
         return CTM_PROCESS_MANAGER_ERR_INVALID_ARG;
     }
 
@@ -84,14 +86,14 @@ ctm_process_manager_status_t process_manager_refresh(ctm_process_metrics_t*     
     }
 
     /* Mark all processes as inactive */
-    mark_processes_inactive(&process_metrics_list->node);
+    mark_processes_inactive(process_metrics_list);
 
     /* Update existing processes and add new processes */
     while ((entry = readdir(dir)) != NULL) {
-        long                  pid;
-        char*                 end_ptr;
-        unsigned int          upid;
-        ctm_process_metrics_t existing_process_metrics;
+        long                   pid;
+        char*                  end_ptr;
+        unsigned int           upid;
+        ctm_process_metrics_t* existing_process_metrics = NULL;
 
         if (!isdigit((unsigned char) entry->d_name[0])) {
             continue;
@@ -104,31 +106,37 @@ ctm_process_manager_status_t process_manager_refresh(ctm_process_metrics_t*     
         }
         if (errno == ERANGE || pid == LONG_MAX || pid == LONG_MIN) {
             closedir(dir);
-            return -1;
+            return CTM_PROCESS_MANAGER_ERR_INTERNAL;
         }
         if (pid == 0) {
             continue;
         }
 
         upid = (unsigned int) pid;
-        if (find_process_by_pid(&process_metrics_list->node, upid, &existing_process_metrics) == CTM_PROCESS_MANAGER_SUCCESS) {
-            const ctm_process_metrics_status_t process_metrics_read_status = ctm_process_metrics_read(upid, &existing_process_metrics);
-            existing_process_metrics.is_active                             = (process_metrics_read_status == CTM_PROCESS_METRICS_SUCCESS);
+        if (find_process_by_pid(process_metrics_list, upid, &existing_process_metrics) == CTM_PROCESS_MANAGER_SUCCESS) {
+            const ctm_process_metrics_status_t process_metrics_read_status = ctm_process_metrics_read(upid, existing_process_metrics);
+            existing_process_metrics->is_active                            = (process_metrics_read_status == CTM_PROCESS_METRICS_SUCCESS);
 
             if (process_metrics_read_status == CTM_PROCESS_METRICS_SUCCESS) {
                 if (on_process_updated) {
-                    on_process_updated(&existing_process_metrics);
+                    on_process_updated(existing_process_metrics);
                 }
             } else if (process_metrics_read_status != CTM_PROCESS_METRICS_SUCCESS) {
                 /* Process was found by readdir but not capture, mark as inactive for removal */
-                existing_process_metrics.is_active = 0;
+                existing_process_metrics->is_active = 0;
             } else {
                 closedir(dir);
                 return CTM_PROCESS_MANAGER_ERR_INTERNAL;
             }
         } else {
-            ctm_process_metrics_t new_process_metrics;
-            if (ctm_process_metrics_read(upid, &new_process_metrics) != CTM_PROCESS_METRICS_SUCCESS) {
+            ctm_process_metrics_t* new_process_metrics = calloc(1, sizeof(ctm_process_metrics_t));
+            if (new_process_metrics == NULL) {
+                closedir(dir);
+                return CTM_PROCESS_MANAGER_ERR_INTERNAL;
+            }
+
+            if (ctm_process_metrics_read(upid, new_process_metrics) != CTM_PROCESS_METRICS_SUCCESS) {
+                free(new_process_metrics);
                 if (errno == ENOENT) {
                     continue;
                 }
@@ -137,18 +145,21 @@ ctm_process_manager_status_t process_manager_refresh(ctm_process_metrics_t*     
                 return CTM_PROCESS_MANAGER_ERR_INTERNAL;
             }
 
+            new_process_metrics->pid       = upid;
+            new_process_metrics->is_active = 1;
+
             /* Add to the front of the list */
-            ctm_list_add(&new_process_metrics.node, &process_metrics_list->node);
+            ctm_list_add(process_metrics_list, &new_process_metrics->node);
 
             if (on_process_added) {
-                on_process_added(&new_process_metrics);
+                on_process_added(new_process_metrics);
             }
         }
     }
     closedir(dir);
 
     /* Remove inactive processes */
-    remove_inactive_processes(&process_metrics_list->node, on_process_removed);
+    remove_inactive_processes(process_metrics_list, on_process_removed);
 
-    return 0;
+    return CTM_PROCESS_MANAGER_SUCCESS;
 }

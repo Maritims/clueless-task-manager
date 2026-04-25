@@ -12,7 +12,7 @@
 
 int ui_start(int argc, char** argv) {
     ProcessTab             process_tab;
-    ctm_process_metrics_t* process_list;
+    ctm_list_node_t        process_list;
     ctm_list_node_t*       curr;
     int                    i = 6;
 
@@ -30,8 +30,8 @@ int ui_start(int argc, char** argv) {
     process_tab_create(&process_tab);
     (void) process_tab;
 
-    process_list = calloc(128, sizeof(ProcessTab));
-    process_manager_refresh(process_list, 128, NULL, NULL, NULL);
+    ctm_list_init(&process_list);
+    process_manager_refresh(&process_list, 128, NULL, NULL, NULL);
 
     update_panels();
 
@@ -45,7 +45,7 @@ int ui_start(int argc, char** argv) {
     mvprintw(4, 2, "------  --------------------  -----");
     mvprintw(5, 2, "%6s  %-100s  %-6s", "123", "FooBar", "Running");
 
-    ctm_list_for_each(curr, &process_list->node) {
+    ctm_list_for_each(curr, &process_list) {
         const ctm_process_metrics_t* process_metrics = ctm_list_entry(curr, ctm_process_metrics_t, node);
         unsigned int                 pid;
         char                         name[128];

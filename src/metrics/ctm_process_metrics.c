@@ -1,12 +1,12 @@
+#include "metrics/ctm_process_metrics.h"
+
 #include <errno.h>
-#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <bits/local_lim.h>
 #include <sys/stat.h>
 
-#include "metrics/ctm_process_metrics.h"
 #include "core/ctm_platform.h"
 #include "internal/ctm_process_metrics_internal.h"
 

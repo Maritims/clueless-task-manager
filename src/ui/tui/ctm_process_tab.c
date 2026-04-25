@@ -31,10 +31,10 @@ int process_tab_destroy(ProcessTab* tab) {
     return 0;
 }
 
-int process_tab_update(ProcessTab* tab, ctm_process_metrics_t* process_list, size_t* out_value) {
+int process_tab_update(ProcessTab* tab, ctm_list_node_t* process_list, size_t* out_value) {
     ctm_list_node_t* curr;
 
-    if (tab == NULL || tab->window == NULL) {
+    if (tab == NULL || tab->window == NULL || process_list == NULL) {
         return -1;
     }
 
@@ -43,7 +43,7 @@ int process_tab_update(ProcessTab* tab, ctm_process_metrics_t* process_list, siz
     mvwprintw(tab->window, 0, 0, "PID   PROCESS");
     mvwprintw(tab->window, 1, 0, "------------------------------");
 
-    ctm_list_for_each(curr, &process_list->node) {
+    ctm_list_for_each(curr, process_list) {
         (*out_value)++;
     }
 

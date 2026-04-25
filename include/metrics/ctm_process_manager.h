@@ -2,6 +2,7 @@
 #define CTM_METRICS_PROCESS_MANAGER_H
 
 #include "ctm_process_metrics.h"
+#include "core/list.h"
 #include "../core/hash_map.h"
 
 typedef struct ctm_process_manager ctm_process_manager_t;
@@ -16,7 +17,7 @@ typedef enum {
     CTM_PROCESS_MANAGER_ERR_INTERNAL
 } ctm_process_manager_status_t;
 
-ctm_process_manager_status_t process_manager_refresh(ctm_process_metrics_t* process_metrics_list,
+ctm_process_manager_status_t process_manager_refresh(ctm_list_node_t*         process_metrics_list,
                                                      size_t                 process_metrics_arr_len,
                                                      ProcessManagerCallback on_process_added,
                                                      ProcessManagerCallback on_process_updated,
