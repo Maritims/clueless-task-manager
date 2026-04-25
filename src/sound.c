@@ -7,7 +7,7 @@
  * A ringbuffer and event-based architecture is used to ensure smooth playback.
  */
 
-#include "ctm/sound.h"
+#include "sound.h"
 
 #include <math.h>
 #include <sndfile.h>

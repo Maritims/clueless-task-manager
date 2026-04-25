@@ -1,9 +1,6 @@
-#include "ctm_process_metrics.h"
-
-#include "../src/internal/ctm_process_metrics_internal.h"
-
-#include "ctm_types.h"
+#include "metrics/ctm_process_metrics.h"
 #include "test.h"
+#include "internal/ctm_process_metrics_internal.h"
 
 TEST(read) {
     /* arrange */

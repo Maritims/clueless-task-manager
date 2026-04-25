@@ -1,8 +1,9 @@
 #ifndef CTM_CPU_METRICS_H
 #define CTM_CPU_METRICS_H
-#include "../ctm_types.h"
 
 #include <stddef.h>
+
+typedef struct ctm_cpu_metrics ctm_cpu_metrics_t;
 
 typedef enum {
     CTM_CPU_METRICS_SUCCESS,

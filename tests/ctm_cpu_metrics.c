@@ -1,10 +1,10 @@
 #include <unistd.h>
 
-#include "ctm_cpu_metrics.h"
+#include "metrics/ctm_cpu_metrics.h"
 
 #include <limits.h>
 
-#include "../src/internal/ctm_cpu_metrics_internal.h"
+#include "internal/ctm_cpu_metrics_internal.h"
 #include "test.h"
 
 TEST(read) {

@@ -7,7 +7,7 @@
 
 #include "core/list.h"
 #include "internal/ctm_process_tab_internal.h"
-#include "metrics/internal/ctm_process_metrics_internal.h"
+#include "internal/ctm_process_metrics_internal.h"
 #include "ui/ctm_process_tab.h"
 
 int ui_start(int argc, char** argv) {

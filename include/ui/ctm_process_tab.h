@@ -2,7 +2,7 @@
 #define CTM_PROCESS_TAB_H
 #include <stddef.h>
 
-#include "ctm_types.h"
+#include "metrics/ctm_process_metrics.h"
 
 typedef struct ProcessTab ProcessTab;
 

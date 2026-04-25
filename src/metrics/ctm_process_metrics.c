@@ -7,8 +7,7 @@
 #include <sys/stat.h>
 
 #include "metrics/ctm_process_metrics.h"
-#include "../../include/core/ctm_platform.h"
-#include "ctm_types.h"
+#include "core/ctm_platform.h"
 #include "internal/ctm_process_metrics_internal.h"
 
 #define BUFFER_SIZE 1024

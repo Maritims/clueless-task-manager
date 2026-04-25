@@ -1,4 +1,4 @@
-#include "../include/ring_buffer.h"
+#include "core/ring_buffer.h"
 #include "test.h"
 
 #include <errno.h>

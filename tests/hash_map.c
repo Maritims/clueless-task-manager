@@ -1,4 +1,5 @@
-#include "collections/hash_map.h"
+#include "core/hash_map.h"
+
 #include "test.h"
 
 TEST(create) {

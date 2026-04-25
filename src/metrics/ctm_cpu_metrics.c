@@ -4,8 +4,7 @@
 #include <string.h>
 
 #include "metrics/ctm_cpu_metrics.h"
-#include "ctm_types.h"
-#include "metrics/internal/ctm_cpu_metrics_internal.h"
+#include "internal/ctm_cpu_metrics_internal.h"
 
 ctm_cpu_metrics_status_t ctm_cpu_metrics_read(ctm_cpu_metrics_t* out_value) {
     FILE*  fp;

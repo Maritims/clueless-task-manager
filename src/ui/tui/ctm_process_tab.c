@@ -4,10 +4,8 @@
 
 #include "ui/ctm_process_tab.h"
 #include "core/list.h"
-#include "metrics/internal/ctm_process_metrics_internal.h"
-#include "ui/tui/internal/ctm_process_tab_internal.h"
-
-#include "ctm_types.h"
+#include "internal/ctm_process_metrics_internal.h"
+#include "internal/ctm_process_tab_internal.h"
 
 int process_tab_create(ProcessTab* out_value) {
     if (out_value == NULL) {

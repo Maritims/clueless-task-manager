@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <string.h>
 
+int snprintf(char *str, size_t size, const char *format, ...);
+
 int assert_null(const void* value, const char* message) {
     if (value == NULL) {
         return 0;

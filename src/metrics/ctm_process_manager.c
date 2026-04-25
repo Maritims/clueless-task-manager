@@ -6,7 +6,6 @@
 #include <stdlib.h>
 
 #include "metrics/ctm_process_manager.h"
-#include "ctm_types.h"
 #include "core/list.h"
 #include "internal/ctm_process_metrics_internal.h"
 

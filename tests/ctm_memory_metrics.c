@@ -1,6 +1,7 @@
-#include "ctm_memory_metrics.h"
+#include "metrics/ctm_memory_metrics.h"
+
 #include "test.h"
-#include "../src/internal/ctm_memory_metrics_internal.h"
+#include "internal/ctm_memory_metrics_internal.h"
 
 TEST(read) {
     /* arrange */
@@ -12,7 +13,7 @@ TEST(read) {
     actual = ctm_memory_metrics_read(&memory_metrics);
 
     /* assert */
-    success = assert_int_equality(CTM_MEMORY_METRICS_SUCCESS, actual, "ctm_memory_metrics_read() should not return CTM_MEMORY_METRICS_SUCCESS");
+    success = assert_int_equality(CTM_MEMORY_METRICS_SUCCESS, actual, ctm_memory_metrics_strerror(actual));
 
     return success;
 }

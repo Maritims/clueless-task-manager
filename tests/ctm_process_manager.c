@@ -1,34 +1,18 @@
-#include "metrics/process_manager.h"
+#include "metrics/ctm_process_manager.h"
 #include <stdio.h>
 #include "test.h"
-#include "../include/ctm_process_metrics.h"
+#include "internal/ctm_process_metrics_internal.h"
 
 TEST(process_manager_refresh) {
     /* arrange */
-    Process*      process_list = NULL;
-    Process*      curr;
-    int           success;
+    ctm_process_metrics_t process_list;
+    int                   success;
 
     /* act */
-    success = process_manager_refresh(&process_list, NULL, NULL, NULL);
+    success = process_manager_refresh(&process_list, 1, NULL, NULL, NULL);
 
     /* assert */
     assert_int_equality(0, success, "process_manager_refresh() should return 0");
-
-    curr = process_list;
-    while (curr) {
-        unsigned int pid = process_get_pid(curr);
-        const char* name = process_get_name(curr);
-        printf("pid: %u - name: %s\n", pid, name);
-        curr = process_get_next(curr);
-    }
-
-    /* cleanup */
-    while (process_list) {
-        curr = process_list;
-        process_list = process_get_next(process_list);
-        process_destroy(curr);
-    }
 
     return success;
 }

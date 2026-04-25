@@ -4,15 +4,16 @@
 #include <string.h>
 
 #include "metrics/ctm_memory_metrics.h"
-#include "ctm_types.h"
+
+#include "core/ctm_platform.h"
 #include "internal/ctm_memory_metrics_internal.h"
 
-ctm_memory_metrics_status_t ctm_memory_metrics_read(ctm_memory_metrics_t *out_value) {
-    FILE *fp;
+ctm_memory_metrics_status_t ctm_memory_metrics_read(ctm_memory_metrics_t* out_value) {
+    FILE*  fp;
     size_t bytes_read;
-    char  buffer[1024];
-    char* line_start;
-    char* line_end;
+    char   buffer[1024];
+    char* line_buffer;
+    char* save_ptr;
     int   read_available = -1, read_free = -1, read_total = -1;
 
     if (out_value == NULL) {
@@ -24,41 +25,25 @@ ctm_memory_metrics_status_t ctm_memory_metrics_read(ctm_memory_metrics_t *out_va
         return CTM_MEMORY_METRICS_ERR_OPEN;
     }
 
-    bytes_read = fread(buffer, 1, sizeof(buffer) - 1, fp);
+    bytes_read = fread(buffer, 1, sizeof(buffer), fp);
     fclose(fp);
     if (bytes_read <= 0) {
         return CTM_MEMORY_METRICS_ERR_READ;
     }
 
-    buffer[bytes_read] = '\0';
-
-    line_start = buffer;
-    while (*line_start != '\0') {
-        line_end = line_start;
-        while (*line_end != '\0' && *line_end != '\n') {
-            line_end++;
-        }
-
-        if (*line_end == '\n') {
-            *line_end = '\0';
-        }
-
-        if (strncmp(line_start, "MemAvailable:", 13) == 0) {
-            out_value->mem_available = strtoul(line_start + 13, NULL, 10);
+    line_buffer = ctm_strtok_r(buffer, "\n", &save_ptr);
+    while (line_buffer != NULL) {
+        if (strncmp(line_buffer, "MemAvailable:", 13) == 0) {
+            out_value->mem_available = strtoul(line_buffer + 13, NULL, 10);
             read_available        = 1;
-        } else if (strncmp(line_start, "MemFree:", 8) == 0) {
-            out_value->mem_free = strtoul(line_start + 8, NULL, 10);
+        } else if (strncmp(line_buffer, "MemFree:", 8) == 0) {
+            out_value->mem_free = strtoul(line_buffer + 8, NULL, 10);
             read_free        = 1;
-        } else if (strncmp(line_start, "MemTotal:", 9) == 0) {
-            out_value->mem_total = strtoul(line_start + 9, NULL, 10);
+        } else if (strncmp(line_buffer, "MemTotal:", 9) == 0) {
+            out_value->mem_total = strtoul(line_buffer + 9, NULL, 10);
             read_total        = 1;
         }
-
-        if (*line_end == '\0') {
-            break;
-        }
-
-        line_start = line_end + 1;
+        line_buffer = ctm_strtok_r(NULL, "\n", &save_ptr);
     }
 
     if (read_available == -1 || read_free == -1 || read_total == -1) {
@@ -106,4 +91,23 @@ ctm_memory_metrics_status_t ctm_memory_metrics_get_available(const ctm_memory_me
 
     *out_value = memory_metrics->mem_available;
     return CTM_MEMORY_METRICS_SUCCESS;
+}
+
+const char* ctm_memory_metrics_strerror(const ctm_memory_metrics_status_t memory_metrics_status) {
+    switch (memory_metrics_status) {
+        case CTM_MEMORY_METRICS_SUCCESS:
+            return "Success";
+        case CTM_MEMORY_METRICS_ERR_INVALID_ARG:
+            return "Invalid argument";
+        case CTM_MEMORY_METRICS_ERR_OPEN:
+            return "Failed to open file";
+        case CTM_MEMORY_METRICS_ERR_READ:
+            return "Failed to read file";
+        case CTM_MEMORY_METRICS_ERR_PARSE:
+            return "Failed to parse file";
+        case CTM_MEMORY_METRICS_ERR_INTERNAL:
+            return "Internal error";
+        default:
+            return "Unknown error";
+    }
 }

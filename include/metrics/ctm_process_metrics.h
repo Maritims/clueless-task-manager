@@ -1,7 +1,8 @@
 #ifndef CTM_PROCESS_METRICS_H
 #define CTM_PROCESS_METRICS_H
 #include <stddef.h>
-#include "../ctm_types.h"
+
+typedef struct ctm_process_metrics ctm_process_metrics_t;
 
 typedef enum {
     CTM_PROCESS_METRICS_SUCCESS,
