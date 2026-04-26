@@ -10,24 +10,65 @@ add_compile_options(${ANSI_FLAGS})
 
 enable_testing()
 
-function(CtmAddTest test_name)
-    add_executable(${test_name}_test tests/${test_name}.c)
+function(CtmAddTest lib_name test_name)
+    add_executable(${test_name}_test tests/src/${lib_name}/${test_name}.c)
     target_compile_options(${test_name}_test PRIVATE -Wno-missing-prototypes)
-    target_include_directories(${test_name}_test PRIVATE application/src/metrics ui/${UI_TYPE})
     target_link_libraries(${test_name}_test PRIVATE testing ${ARGN})
     add_test(NAME ${test_name} COMMAND ${test_name}_test)
 endfunction()
 
-function(CtmAddTests)
-    foreach(test_name IN LISTS ARGN)
-        CtmAddTest(${test_Name})
-    endforeach ()
-endfunction()
+# ----- MODULE DEFINITIONS -----
 
-add_subdirectory(core)
-add_subdirectory(metrics)
-add_subdirectory(ui)
+# ----- CORE MODULE -----
+add_library(core STATIC
+        src/core/linux/platform.c
+        src/core/hash_map.c
+        src/core/list.c
+        src/core/log.c
+        src/core/ring_buffer.c
+)
+target_include_directories(core PUBLIC include/core)
+CtmAddTest(core hash_map)
+CtmAddTest(core ring_buffer)
 
-# --- Main Executable ---
-add_executable(ctm application/src/main.c)
+# ----- METRICS MODULE -----
+add_library(metrics STATIC
+        src/metrics/cpu.c
+        src/metrics/mem.c
+        src/metrics/process.c
+        src/metrics/process_manager.c
+        src/metrics/sampler.c
+)
+target_include_directories(metrics PUBLIC include/metrics)
+target_include_directories(metrics PRIVATE src/metrics/internal)
+target_link_libraries(metrics PRIVATE core)
+CtmAddTest(metrics cpu)
+CtmAddTest(metrics mem)
+CtmAddTest(metrics process)
+CtmAddTest(metrics process_manager)
+
+# ----- UI MODULE -----
+add_library(ui STATIC
+        src/ui/tui/process_tab.c
+        src/ui/tui/ui.c
+)
+target_include_directories(ui PUBLIC include/ui)
+find_package(Curses REQUIRED)
+target_link_libraries(ui PRIVATE ${CURSES_LIBRARIES} panel core metrics)
+
+# ----- TESTING MODULE -----
+add_library(testing STATIC
+        tests/src/test.c
+)
+target_include_directories(testing PRIVATE tests/include/test.h)
+
+# ----- MAIN EXECUTABLE -----
+add_executable(ctm src/main.c)
 target_link_libraries(ctm PRIVATE core metrics ui)
+
+# ----- GENERATE OVERVIEW OF PROJECT STRUCTURE -----
+add_custom_target(run_tree
+        COMMAND tree -I 'cmake-build-debug' -I 'cmake' -I 'build' -I 'cmake-build-debug'
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMENT "Generating overview of project structure"
+)
