@@ -17,6 +17,25 @@ function(CtmAddTest lib_name test_name)
     add_test(NAME ${test_name} COMMAND ${test_name}_test)
 endfunction()
 
+# ----- GENERATE OVERVIEW OF PROJECT STRUCTURE -----
+add_custom_target(run_tree
+        # -n: No color codes
+        # -I: Improved ignore pattern to catch common build folder names
+        COMMAND tree -n -I 'build*|cmake-build-*'
+
+        COMMAND echo "# Project Structure" > ${CMAKE_CURRENT_SOURCE_DIR}/STRUCTURE.md
+        #COMMAND echo "Generated on: \$(date)" >> ${CMAKE_CURRENT_SOURCE_DIR}/STRUCTURE.md
+        COMMAND echo "" >> ${CMAKE_CURRENT_SOURCE_DIR}/STRUCTURE.md
+        COMMAND echo "\`\`\`" >> ${CMAKE_CURRENT_SOURCE_DIR}/STRUCTURE.md
+        # Apply the -n (no-color) flag here as well
+        COMMAND tree -n -I 'build*|cmake-build-*' >> ${CMAKE_CURRENT_SOURCE_DIR}/STRUCTURE.md
+        COMMAND echo "\`\`\`" >> ${CMAKE_CURRENT_SOURCE_DIR}/STRUCTURE.md
+
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        VERBATIM
+        COMMENT "Generating overview of project structure and updating STRUCTURE.md"
+)
+
 # ----- MODULE DEFINITIONS -----
 
 # ----- CORE MODULE -----
@@ -65,10 +84,4 @@ target_include_directories(testing PRIVATE tests/include/test.h)
 # ----- MAIN EXECUTABLE -----
 add_executable(ctm src/main.c)
 target_link_libraries(ctm PRIVATE core metrics ui)
-
-# ----- GENERATE OVERVIEW OF PROJECT STRUCTURE -----
-add_custom_target(run_tree
-        COMMAND tree -I 'cmake-build-debug' -I 'cmake' -I 'build' -I 'cmake-build-debug'
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        COMMENT "Generating overview of project structure"
-)
+add_dependencies(ctm run_tree)
