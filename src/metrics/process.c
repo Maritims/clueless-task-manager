@@ -229,7 +229,8 @@ process_result_t process_sizeof(size_t* out)
     return PROCESS_ERR_INVALID_ARG;
 }
 
-process_result_t process_from_node(list_node_t* node, process_t** out)
+process_result_t process_from_node(list_node_t* node,
+                                   process_t**  out)
 {
     if (node && out) {
         *out = LIST_ENTRY(node, process_t, node);

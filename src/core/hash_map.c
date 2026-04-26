@@ -26,7 +26,11 @@ struct HashMap {
     CompareFunc compare_func;
 };
 
-HashMap* hash_map_create(const size_t key_size, const size_t value_size, const HashFunc hash_func, const CompareFunc compare_func) {
+HashMap* hash_map_create(const size_t      key_size,
+                         const size_t      value_size,
+                         const HashFunc    hash_func,
+                         const CompareFunc compare_func)
+{
     HashMap* hash_map;
 
     if (key_size == 0 || value_size == 0 || hash_func == NULL || compare_func == NULL) {
@@ -52,7 +56,8 @@ HashMap* hash_map_create(const size_t key_size, const size_t value_size, const H
     return hash_map;
 }
 
-void hash_map_free(HashMap* hash_map) {
+void hash_map_free(HashMap* hash_map)
+{
     size_t i;
 
     if (hash_map == NULL) {
@@ -70,7 +75,8 @@ void hash_map_free(HashMap* hash_map) {
     free(hash_map);
 }
 
-size_t hash_map_count(const HashMap* hash_map) {
+size_t hash_map_count(const HashMap* hash_map)
+{
     if (hash_map == NULL) {
         errno = EINVAL;
         return 0;
@@ -78,7 +84,9 @@ size_t hash_map_count(const HashMap* hash_map) {
     return hash_map->count;
 }
 
-static int hash_map_resize(HashMap* hash_map, const size_t new_capacity) {
+static int hash_map_resize(HashMap*     hash_map,
+                           const size_t new_capacity)
+{
     size_t     old_capacity, i, index;
     HashEntry *old_entries, *new_entries;
 
@@ -115,7 +123,10 @@ static int hash_map_resize(HashMap* hash_map, const size_t new_capacity) {
     return 0;
 }
 
-int hash_map_put(HashMap* hash_map, const void* key, const void* value) {
+int hash_map_put(HashMap*    hash_map,
+                 const void* key,
+                 const void* value)
+{
     size_t index, start_index, first_tombstone_index;
 
     if (hash_map == NULL || key == NULL || value == NULL) {
@@ -172,7 +183,9 @@ int hash_map_put(HashMap* hash_map, const void* key, const void* value) {
     return 0;
 }
 
-void* hash_map_get(const HashMap* hash_map, const void* key) {
+void* hash_map_get(const HashMap* hash_map,
+                   const void*    key)
+{
     size_t index, start_index;
 
     if (hash_map == NULL || key == NULL) {
@@ -196,7 +209,9 @@ void* hash_map_get(const HashMap* hash_map, const void* key) {
     return NULL;
 }
 
-int hash_map_remove(HashMap* hash_map, const void* key) {
+int hash_map_remove(HashMap*    hash_map,
+                    const void* key)
+{
     size_t index, start_index;
 
     if (hash_map == NULL || key == NULL) {
@@ -242,7 +257,8 @@ struct HashMapIter {
     size_t   index;
 };
 
-size_t hash_int(const void* key) {
+size_t hash_int(const void* key)
+{
     /* Cast the void pointer back to an int pointer and dereference */
     const int pid = *(const int *) key;
 
@@ -250,14 +266,17 @@ size_t hash_int(const void* key) {
     return (size_t) pid * KNUTHS_CONSTANT;
 }
 
-int hash_compare_int(const void* a, const void* b) {
+int hash_compare_int(const void* a,
+                     const void* b)
+{
     const int pid_a = *(const int *) a;
     const int pid_b = *(const int *) b;
 
     return (pid_a == pid_b) ? 0 : (pid_a < pid_b ? -1 : 1);
 }
 
-HashMapIter* hash_map_iter_create(HashMap* hash_map) {
+HashMapIter* hash_map_iter_create(HashMap* hash_map)
+{
     HashMapIter* iter;
 
     if (hash_map == NULL) {
@@ -273,13 +292,17 @@ HashMapIter* hash_map_iter_create(HashMap* hash_map) {
     return iter;
 }
 
-void hash_map_iter_free(HashMapIter* iter) {
+void hash_map_iter_free(HashMapIter* iter)
+{
     if (iter) {
         free(iter);
     }
 }
 
-int hash_map_iter_next(HashMapIter* iter, void** key, void** value) {
+int hash_map_iter_next(HashMapIter* iter,
+                       void**       key,
+                       void**       value)
+{
     if (iter == NULL || key == NULL || value == NULL) {
         errno = EINVAL;
         return -1;

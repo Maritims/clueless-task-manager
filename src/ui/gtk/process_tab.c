@@ -23,7 +23,9 @@ enum { COL_PID, COL_NAME, COL_STATE, COL_ACTIVE, NUM_COLS };
 static const int    VISUAL_ORDER[]      = {COL_NAME, COL_PID};
 static const size_t VISUAL_COLUMN_COUNT = sizeof(VISUAL_ORDER) / sizeof(VISUAL_ORDER[0]);
 
-static void on_ui_process_added(Process* process, void* user_data) {
+static void on_ui_process_added(Process* process,
+                                void*    user_data)
+{
     const ProcessTab*    self = user_data;
     GtkTreeIter          iter;
     GtkTreePath*         path;
@@ -43,7 +45,9 @@ static void on_ui_process_added(Process* process, void* user_data) {
     gtk_tree_path_free(path);
 }
 
-static void on_ui_process_updated(Process* process, void* user_data) {
+static void on_ui_process_updated(Process* process,
+                                  void*    user_data)
+{
     const ProcessTab*     context       = user_data;
     unsigned int          pid           = process_get_pid(process);
     GtkTreeRowReference** row_reference = hash_map_get(context->pid_to_iter, &pid);
@@ -62,7 +66,9 @@ static void on_ui_process_updated(Process* process, void* user_data) {
     }
 }
 
-static void on_ui_process_removed(Process* process, void* user_data) {
+static void on_ui_process_removed(Process* process,
+                                  void*    user_data)
+{
     const ProcessTab*     self          = user_data;
     const unsigned int    pid           = process_get_pid(process);
     GtkTreeRowReference** row_reference = hash_map_get(self->pid_to_iter, &pid);
@@ -81,7 +87,8 @@ static void on_ui_process_removed(Process* process, void* user_data) {
     }
 }
 
-ProcessTab* process_tab_create(void) {
+ProcessTab* process_tab_create(void)
+{
     const ProcessColumn columns[NUM_COLS] = {
         {"PID", G_TYPE_UINT, 1, 0, 1.0f},
         {"Image Name", G_TYPE_STRING, 1, 1, 0.0f},
@@ -141,7 +148,8 @@ ProcessTab* process_tab_create(void) {
     return process_tab;
 }
 
-void process_tab_destroy(ProcessTab* process_tab) {
+void process_tab_destroy(ProcessTab* process_tab)
+{
     if (process_tab) {
         gtk_widget_destroy(process_tab->view);
         hash_map_free(process_tab->pid_to_iter);
@@ -149,7 +157,9 @@ void process_tab_destroy(ProcessTab* process_tab) {
     }
 }
 
-size_t process_tab_update(ProcessTab* self, ProcessList* process_list) {
+size_t process_tab_update(ProcessTab*  self,
+                          ProcessList* process_list)
+{
     ProcessListObserver observer = {
         on_ui_process_added,
         on_ui_process_updated,
@@ -171,7 +181,9 @@ size_t process_tab_update(ProcessTab* self, ProcessList* process_list) {
     return process_list_get_count(process_list);
 }
 
-void process_tab_register(ProcessTab* process_tab, void* tab_container) {
+void process_tab_register(ProcessTab* process_tab,
+                          void*       tab_container)
+{
     RETURN_VOID_IF_ARG_IS_NULL("process_tab_register", process_tab, "process_tab");
     RETURN_VOID_IF_ARG_IS_NULL("process_tab_register", tab_container, "tab_container");
 

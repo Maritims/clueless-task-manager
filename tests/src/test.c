@@ -4,9 +4,14 @@
 #include <stdio.h>
 #include <string.h>
 
-int snprintf(char *str, size_t size, const char *format, ...);
+int snprintf(char*       str,
+             size_t      size,
+             const char* format,
+             ...);
 
-int assert_null(const void* value, const char* message) {
+int assert_null(const void* value,
+                const char* message)
+{
     if (value == NULL) {
         return 0;
     }
@@ -15,7 +20,9 @@ int assert_null(const void* value, const char* message) {
     return 1;
 }
 
-int assert_not_null(const void* value, const char* message) {
+int assert_not_null(const void* value,
+                    const char* message)
+{
     if (value != NULL) {
         return 0;
     }
@@ -24,7 +31,10 @@ int assert_not_null(const void* value, const char* message) {
     return 1;
 }
 
-int assert_int_equality(const int expected, const int actual, const char* message) {
+int assert_int_equality(const int   expected,
+                        const int   actual,
+                        const char* message)
+{
     assert(message != NULL && strlen(message) > 0 && "message must not be NULL or empty");
 
     if (expected == actual) {
@@ -35,7 +45,10 @@ int assert_int_equality(const int expected, const int actual, const char* messag
     return 1;
 }
 
-int assert_long_greater_than(const long expected, const long actual, const char* message) {
+int assert_long_greater_than(const long  expected,
+                             const long  actual,
+                             const char* message)
+{
     assert(message != NULL && strlen(message) > 0 && "message must not be NULL or empty");
 
     if (actual > expected) {
@@ -46,7 +59,10 @@ int assert_long_greater_than(const long expected, const long actual, const char*
     return 1;
 }
 
-int assert_unsigned_int_equality(const unsigned int expected, const unsigned int actual, const char* message) {
+int assert_unsigned_int_equality(const unsigned int expected,
+                                 const unsigned int actual,
+                                 const char*        message)
+{
     assert(message != NULL && strlen(message) > 0 && "message must not be NULL or empty");
 
     if (expected == actual) {
@@ -57,7 +73,10 @@ int assert_unsigned_int_equality(const unsigned int expected, const unsigned int
     return 1;
 }
 
-int assert_unsigned_long_equality(const unsigned long expected, const unsigned long actual, const char* message) {
+int assert_unsigned_long_equality(const unsigned long expected,
+                                  const unsigned long actual,
+                                  const char*         message)
+{
     assert(message != NULL && strlen(message) > 0 && "message must not be NULL or empty");
 
     if (expected == actual) {
@@ -68,7 +87,10 @@ int assert_unsigned_long_equality(const unsigned long expected, const unsigned l
     return 1;
 }
 
-int assert_string_equality(const char* expected, const char* actual, const char* message) {
+int assert_string_equality(const char* expected,
+                           const char* actual,
+                           const char* message)
+{
     assert(message != NULL && strlen(message) > 0 && "message must not be NULL or empty");
 
     if (strcmp(expected, actual) == 0) {
@@ -79,7 +101,9 @@ int assert_string_equality(const char* expected, const char* actual, const char*
     return 1;
 }
 
-int run_all_tests(const TestCase* test_cases, const size_t test_count) {
+int run_all_tests(const TestCase* test_cases,
+                  const size_t    test_count)
+{
     int      failed_tests = 0;
     size_t   i;
     TestCase test_case;

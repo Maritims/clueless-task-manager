@@ -22,7 +22,12 @@ typedef enum {
 
 const char* ctm_get_time(void);
 const char* ctm_get_level_str(CtmLogLevel level);
-void        ctm_log(CtmLogLevel level, const char* file, int line, const char* func, const char* fmt, ...);
+void        ctm_log(CtmLogLevel level,
+             const char*        file,
+             int                line,
+             const char*        func,
+             const char*        fmt,
+             ...);
 
 #ifndef CTM_LOG_THRESHOLD
 #define CTM_LOG_THRESHOLD CTM_LOG_LEVEL_DEBUG

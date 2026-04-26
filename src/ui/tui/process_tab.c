@@ -6,7 +6,8 @@
 #include "list.h"
 #include "internal/process_tab_internal.h"
 
-int process_tab_create(ProcessTab* out_value) {
+int process_tab_create(ProcessTab* out_value)
+{
     if (out_value == NULL) {
         return -1;
     }
@@ -18,7 +19,8 @@ int process_tab_create(ProcessTab* out_value) {
     return 0;
 }
 
-int process_tab_destroy(ProcessTab* tab) {
+int process_tab_destroy(ProcessTab* tab)
+{
     if (tab == NULL) {
         return -1;
     }
@@ -30,7 +32,10 @@ int process_tab_destroy(ProcessTab* tab) {
     return 0;
 }
 
-int process_tab_update(ProcessTab* tab, list_node_t* process_list, size_t* out) {
+int process_tab_update(ProcessTab*  tab,
+                       list_node_t* process_list,
+                       size_t*      out)
+{
     list_node_t* curr;
 
     if (tab == NULL || tab->window == NULL || process_list == NULL) {
@@ -50,7 +55,9 @@ int process_tab_update(ProcessTab* tab, list_node_t* process_list, size_t* out) 
     return 0;
 }
 
-int process_tab_register(ProcessTab* tab, void* tab_container) {
+int process_tab_register(ProcessTab* tab,
+                         void*       tab_container)
+{
     (void) tab;
     (void) tab_container;
 

@@ -3,7 +3,8 @@
 
 #include <errno.h>
 
-int test_alloc(void) {
+int test_alloc(void)
+{
     /* arrange */
     int         success;
     RingBuffer* actual;
@@ -20,7 +21,8 @@ int test_alloc(void) {
     return success;
 }
 
-int test_advance_and_peek(void) {
+int test_advance_and_peek(void)
+{
     /* arrange */
     int         success;
     RingBuffer* ring_buffer;
@@ -45,7 +47,8 @@ int test_advance_and_peek(void) {
     return success;
 }
 
-int test_wrap_around(void) {
+int test_wrap_around(void)
+{
     /* arrange */
     int         success;
     RingBuffer* ring_buffer;

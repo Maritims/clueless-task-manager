@@ -15,9 +15,16 @@ typedef enum {
 const char* mem_strerror(mem_result_t result);
 
 mem_result_t mem_read(mem_t* out);
+
 mem_result_t mem_destroy(mem_t* mem);
-mem_result_t mem_total(const mem_t* mem, unsigned long* out);
-mem_result_t mem_free(const mem_t* mem, unsigned long* out);
-mem_result_t mem_available(const mem_t* mem, unsigned long* out);
+
+mem_result_t mem_total(const mem_t*   mem,
+                       unsigned long* out);
+
+mem_result_t mem_free(const mem_t*   mem,
+                      unsigned long* out);
+
+mem_result_t mem_available(const mem_t*   mem,
+                           unsigned long* out);
 
 #endif

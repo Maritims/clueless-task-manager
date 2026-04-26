@@ -1,11 +1,14 @@
 #include "list.h"
 
-void list_init(list_node_t* head) {
+void list_init(list_node_t* head)
+{
     head->next = head;
     head->prev = head;
 }
 
-void list_add_node(list_node_t* head, list_node_t* new_node) {
+void list_add_node(list_node_t* head,
+                   list_node_t* new_node)
+{
     /*
      * Consider the nodes A and B.
      * A: the new head.
@@ -24,7 +27,8 @@ void list_add_node(list_node_t* head, list_node_t* new_node) {
     head->next       = new_node;
 }
 
-void list_delete_node(list_node_t* node) {
+void list_delete_node(list_node_t* node)
+{
     /*
      * Consider the nodes A, B and C.
      * A: the previous node

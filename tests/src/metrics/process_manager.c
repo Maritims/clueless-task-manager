@@ -5,7 +5,8 @@
 #include "../../include/test.h"
 #include "internal/ctm_process_metrics_internal.h"
 
-TEST(process_manager_refresh) {
+TEST(process_manager_refresh)
+{
     /* arrange */
     ctm_list_node_t process_list;
     int             success;
@@ -22,7 +23,8 @@ TEST(process_manager_refresh) {
     {
         ctm_list_node_t* curr;
         ctm_list_node_t* n;
-        ctm_list_for_each_safe(curr, n, &process_list) {
+        ctm_list_for_each_safe(curr, n, &process_list)
+        {
             ctm_process_metrics_t* process_metrics = ctm_list_entry(curr, ctm_process_metrics_t, node);
             ctm_list_del(curr);
             ctm_process_metrics_destroy(process_metrics);

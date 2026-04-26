@@ -16,7 +16,8 @@ typedef struct ring_buffer ring_buffer_t;
  * @param item_size Memory size of a single element in bytes.
  * @return A pointer to the buffer, or NULL if the heap is exhausted.
  */
-ring_buffer_t* ring_buffer_alloc(size_t capacity, size_t item_size);
+ring_buffer_t* ring_buffer_alloc(size_t capacity,
+                                 size_t item_size);
 
 /**
  * @brief Releases the buffer memory. Does not free element memory.
@@ -37,7 +38,8 @@ void* ring_buffer_advance(ring_buffer_t* ring_buffer);
  * @param offset The offset.
  * @return A pointer to an item relative to the current head.
  */
-void* ring_buffer_peek(const ring_buffer_t* ring_buffer, size_t offset);
+void* ring_buffer_peek(const ring_buffer_t* ring_buffer,
+                       size_t               offset);
 
 /**
  * @brief Gets the capacity of the ring buffer.

@@ -26,7 +26,8 @@ typedef size_t (*HashFunc)(const void* key);
  * @retval Non-zero if the keys are different.
  * @note This is used to resolve collisions; it must be consistent with the HashFunc.
  */
-typedef int (*CompareFunc)(const void* a, const void* b);
+typedef int (*CompareFunc)(const void* a,
+                           const void* b);
 
 /**
  * @typedef HashEntry
@@ -61,7 +62,10 @@ typedef struct HashMapIter HashMapIter;
  * @param compare_func The function for comparing keys.
  * @return The new hash map.
  */
-HashMap* hash_map_create(size_t key_size, size_t value_size, HashFunc hash_func, CompareFunc compare_func);
+HashMap* hash_map_create(size_t      key_size,
+                         size_t      value_size,
+                         HashFunc    hash_func,
+                         CompareFunc compare_func);
 
 /**
  * @brief Releases hash map memory.
@@ -84,7 +88,9 @@ size_t hash_map_count(const HashMap* hash_map);
  * @retval 0 on success.
  * @retval -1 on failure.
  */
-int hash_map_put(HashMap* hash_map, const void* key, const void* value);
+int hash_map_put(HashMap*    hash_map,
+                 const void* key,
+                 const void* value);
 
 /**
  * @brief Gets the value associated iwth the given key.
@@ -92,7 +98,8 @@ int hash_map_put(HashMap* hash_map, const void* key, const void* value);
  * @param key The key.
  * @return The value with the given key, or NULL if no such key-value pair exists within the hash map.
  */
-void* hash_map_get(const HashMap* hash_map, const void* key);
+void* hash_map_get(const HashMap* hash_map,
+                   const void*    key);
 
 /**
  * @brief Removes a key-value pair from the hash map by the pair's key.
@@ -101,7 +108,8 @@ void* hash_map_get(const HashMap* hash_map, const void* key);
  * @retval 0 on success.
  * @retval -1 on failure.
  */
-int hash_map_remove(HashMap* hash_map, const void* key);
+int hash_map_remove(HashMap*    hash_map,
+                    const void* key);
 
 /**
  * @brief Hashes a key which is guaranteed to be an integer.
@@ -118,7 +126,8 @@ size_t hash_int(const void* key);
  * @retval 1 when a is greater than b.
  * @retval -1 when a is less than b.
  */
-int hash_compare_int(const void* a, const void* b);
+int hash_compare_int(const void* a,
+                     const void* b);
 
 /**
  * @brief Allocates a new iterator.
@@ -140,6 +149,8 @@ void hash_map_iter_free(HashMapIter* iter);
  * @param value A pointer to where the next value will be stored.
  * @return
  */
-int hash_map_iter_next(HashMapIter* iter, void** key, void** value);
+int hash_map_iter_next(HashMapIter* iter,
+                       void**       key,
+                       void**       value);
 
 #endif

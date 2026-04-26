@@ -2,7 +2,8 @@
 #include "../../include/test.h"
 #include "internal/ctm_process_metrics_internal.h"
 
-TEST(read) {
+TEST(read)
+{
     /* arrange */
     int                          success;
     ctm_process_metrics_status_t actual;

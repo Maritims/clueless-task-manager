@@ -7,7 +7,8 @@
 #include "internal/ctm_cpu_metrics_internal.h"
 #include "../../include/test.h"
 
-TEST(read) {
+TEST(read)
+{
     /* arrange */
     int                      success;
     ctm_cpu_metrics_status_t actual;
@@ -22,7 +23,8 @@ TEST(read) {
     return success;
 }
 
-TEST(get_total_usage) {
+TEST(get_total_usage)
+{
     /* arrange */
     int                      success;
     ctm_cpu_metrics_t        current, previous;

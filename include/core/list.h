@@ -19,12 +19,15 @@
         pos = n, n = pos->next)
 
 typedef struct list_node {
-    struct list_node *next;
-    struct list_node *prev;
+    struct list_node* next;
+    struct list_node* prev;
 } list_node_t;
 
 void list_init(list_node_t* head);
-void list_add_node(list_node_t* head, list_node_t* node);
+
+void list_add_node(list_node_t* head,
+                   list_node_t* node);
+
 void list_delete_node(list_node_t* node);
 
 #endif

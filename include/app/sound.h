@@ -9,7 +9,9 @@
 #define CTM_SOUND_H
 
 typedef struct CtmAudioStreamSource CtmAudioStreamSource;
-typedef void (*                     CtmSoundCallback)(CtmAudioStreamSource* audio_stream_source, void* user_data);
+
+typedef void (*CtmSoundCallback)(CtmAudioStreamSource* audio_stream_source,
+                                 void*                 user_data);
 
 /**
  * @brief Boots up the sound system.
@@ -30,7 +32,9 @@ void ctm_sound_deinit(void);
  * * @param user_data Any argument you wish to pass to the callback function.
  * * @return The audio stream source in use, or NULL if the sound cannot be played for any reason.
  */
-CtmAudioStreamSource* ctm_sound_play_async(const char* file, CtmSoundCallback on_finished, void* user_data);
+CtmAudioStreamSource* ctm_sound_play_async(const char*      file,
+                                           CtmSoundCallback on_finished,
+                                           void*            user_data);
 
 /**
  * @brief Cleans up after playing a sound.

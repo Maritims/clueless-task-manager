@@ -15,12 +15,27 @@ typedef enum {
 } cpu_result_t;
 
 cpu_result_t cpu_read(cpu_t* out);
+
 cpu_result_t cpu_destroy(cpu_t* cpu);
+
 cpu_result_t cpu_sizeof(size_t* out);
-cpu_result_t cpu_total_time(const cpu_t* cpu, unsigned long* out);
-cpu_result_t cpu_idle_time(const cpu_t* cpu, unsigned long* out);
-cpu_result_t cpu_user_usage(const cpu_t* curr, const cpu_t* prev, const unsigned long* out);
-cpu_result_t cpu_system_usage(const cpu_t* curr, const cpu_t* prev, const unsigned long* out);
-cpu_result_t cpu_total_usage(const cpu_t* curr, const cpu_t* prev, unsigned long* out);
+
+cpu_result_t cpu_total_time(const cpu_t*   cpu,
+                            unsigned long* out);
+
+cpu_result_t cpu_idle_time(const cpu_t*   cpu,
+                           unsigned long* out);
+
+cpu_result_t cpu_user_usage(const cpu_t*         curr,
+                            const cpu_t*         prev,
+                            const unsigned long* out);
+
+cpu_result_t cpu_system_usage(const cpu_t*         curr,
+                              const cpu_t*         prev,
+                              const unsigned long* out);
+
+cpu_result_t cpu_total_usage(const cpu_t*   curr,
+                             const cpu_t*   prev,
+                             unsigned long* out);
 
 #endif

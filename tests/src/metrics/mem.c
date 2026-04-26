@@ -3,7 +3,8 @@
 #include "../../include/test.h"
 #include "internal/ctm_memory_metrics_internal.h"
 
-TEST(read) {
+TEST(read)
+{
     /* arrange */
     int                         success;
     ctm_memory_metrics_status_t actual;

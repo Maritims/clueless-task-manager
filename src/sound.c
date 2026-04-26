@@ -38,7 +38,8 @@ struct CtmAudioStreamSource {
     int8_t                buffer[BUFFER_SIZE]; /* The buffer used by the ringbuffer control structure to ensure smooth playback. */
 };
 
-static void on_playback_process(void* userdata) {
+static void on_playback_process(void* userdata)
+{
     const struct spa_buffer* raw_audio_buffer;
     int16_t*                 outbound_audio_payload;
     size_t                   bytes_per_audio_frame;
@@ -97,7 +98,8 @@ static const struct pw_stream_events stream_events = {
  * Fill the ringbuffer with sound data.
  * @param userdata The audio stream source.
  */
-static void refill_ringbuffer(void* userdata) {
+static void refill_ringbuffer(void* userdata)
+{
     CtmAudioStreamSource* audio_stream_source = userdata;
     /* The stride is the distance between audio frames. */
     const int stride = sizeof(int16_t) * audio_stream_source->input_snd_file_info.channels;
@@ -142,7 +144,10 @@ static void refill_ringbuffer(void* userdata) {
 /**
  * Event handler. This is where the magic happens. Lock the thread, fill the ringbuffer, and unlock the thread.
  */
-static void on_eventfd_signal(void* userdata, const int fd, uint32_t mask) {
+static void on_eventfd_signal(void*     userdata,
+                              const int fd,
+                              uint32_t  mask)
+{
     CtmAudioStreamSource* audio_stream_source = userdata;
     uint64_t              count;
 
@@ -161,7 +166,8 @@ static void on_eventfd_signal(void* userdata, const int fd, uint32_t mask) {
  */
 static int is_initialized = 0;
 
-void ctm_sound_init(void) {
+void ctm_sound_init(void)
+{
     if (is_initialized) {
         return;
     }
@@ -169,7 +175,8 @@ void ctm_sound_init(void) {
     is_initialized = true;
 }
 
-void ctm_sound_deinit(void) {
+void ctm_sound_deinit(void)
+{
     if (!is_initialized) {
         return;
     }
@@ -177,7 +184,10 @@ void ctm_sound_deinit(void) {
     is_initialized = false;
 }
 
-CtmAudioStreamSource* ctm_sound_play_async(const char* file, CtmSoundCallback on_finished, void* user_data) {
+CtmAudioStreamSource* ctm_sound_play_async(const char*      file,
+                                           CtmSoundCallback on_finished,
+                                           void*            user_data)
+{
     CtmAudioStreamSource*  audio_stream_source;
     uint8_t                buffer[1024];
     struct spa_pod_builder b;
@@ -242,9 +252,9 @@ CtmAudioStreamSource* ctm_sound_play_async(const char* file, CtmSoundCallback on
         &b,
         SPA_PARAM_EnumFormat,
         &SPA_AUDIO_INFO_RAW_INIT(
-            .format = SPA_AUDIO_FORMAT_S16,
+            .format   = SPA_AUDIO_FORMAT_S16,
             .channels = audio_stream_source->input_snd_file_info.channels,
-            .rate = audio_stream_source->input_snd_file_info.samplerate,
+            .rate     = audio_stream_source->input_snd_file_info.samplerate,
         )
     );
 
@@ -266,7 +276,8 @@ CtmAudioStreamSource* ctm_sound_play_async(const char* file, CtmSoundCallback on
     return audio_stream_source;
 }
 
-void ctm_sound_stop(CtmAudioStreamSource* audio_stream_source) {
+void ctm_sound_stop(CtmAudioStreamSource* audio_stream_source)
+{
     if (audio_stream_source) {
         /* Stop the thread before doing anything else. */
         pw_thread_loop_stop(audio_stream_source->thread_loop);

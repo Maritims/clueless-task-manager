@@ -23,7 +23,8 @@ struct AppContext {
     long   total_memory_usage;
 };
 
-AppContext* app_context_create(void) {
+AppContext* app_context_create(void)
+{
     AppContext* ctx = malloc(sizeof(AppContext));
     if (ctx == NULL) {
         fprintf(stderr, "app_context_create: Failed to allocate memory for app context: %s\n", strerror(errno));
@@ -59,7 +60,8 @@ AppContext* app_context_create(void) {
     return ctx;
 }
 
-void app_context_destroy(AppContext* ctx) {
+void app_context_destroy(AppContext* ctx)
+{
     LOG_DEBUG("app_context_destroy", "Destroying application context");
 
     if (ctx) {
@@ -74,7 +76,8 @@ void app_context_destroy(AppContext* ctx) {
     }
 }
 
-void app_context_update(AppContext* ctx) {
+void app_context_update(AppContext* ctx)
+{
     if (ctx == NULL) {
         LOG_ERROR("app_context_update", ("ctx cannot be NULL"));
         return;
@@ -84,7 +87,8 @@ void app_context_update(AppContext* ctx) {
     ctx->total_memory_usage = 0;
 }
 
-ProcessList* app_context_get_process_list(const AppContext* ctx) {
+ProcessList* app_context_get_process_list(const AppContext* ctx)
+{
     if (ctx == NULL) {
         LOG_ERROR("app_context_get_process_list", ("ctx cannot be NULL"));
         return NULL;
@@ -96,7 +100,8 @@ ProcessList* app_context_get_process_list(const AppContext* ctx) {
     return ctx->process_list;
 }
 
-size_t app_context_get_process_count(const AppContext* ctx) {
+size_t app_context_get_process_count(const AppContext* ctx)
+{
     if (ctx == NULL) {
         LOG_ERROR("app_context_get_process_count", "ctx cannot be NULL");
         return 0;
@@ -104,7 +109,8 @@ size_t app_context_get_process_count(const AppContext* ctx) {
     return ctx->process_count;
 }
 
-long app_context_get_cpu_usage(AppContext* ctx) {
+long app_context_get_cpu_usage(AppContext* ctx)
+{
     if (ctx == NULL) {
         LOG_ERROR("app_context_get_total_cpu_usage", "ctx cannot be NULL");
         return -1;
@@ -112,7 +118,8 @@ long app_context_get_cpu_usage(AppContext* ctx) {
     return ctx->total_cpu_usage;
 }
 
-long app_context_get_memory_usage(AppContext* ctx) {
+long app_context_get_memory_usage(AppContext* ctx)
+{
     if (ctx == NULL) {
         LOG_ERROR("app_context_get_total_memory_usage", "ctx cannot be NULL");
         return -1;
@@ -120,7 +127,8 @@ long app_context_get_memory_usage(AppContext* ctx) {
     return ctx->total_memory_usage;
 }
 
-ProcessTab* app_context_get_process_tab(AppContext* ctx) {
+ProcessTab* app_context_get_process_tab(AppContext* ctx)
+{
     if (ctx == NULL) {
         LOG_ERROR("app_context_get_process_tab", ("ctx cannot be NULL"));
         return NULL;
@@ -128,7 +136,8 @@ ProcessTab* app_context_get_process_tab(AppContext* ctx) {
     return ctx->process_tab;
 }
 
-StatusBar* app_context_get_status_bar(AppContext* ctx) {
+StatusBar* app_context_get_status_bar(AppContext* ctx)
+{
     if (ctx == NULL) {
         LOG_ERROR("app_context_get_status_bar", ("ctx cannot be NULL"));
         return NULL;

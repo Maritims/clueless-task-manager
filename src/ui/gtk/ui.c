@@ -18,7 +18,8 @@ typedef enum {
 
 AppContext* g_ctx;
 
-static gboolean on_update_cpu_usage(gpointer user_data) {
+static gboolean on_update_cpu_usage(gpointer user_data)
+{
     Sampler*   cpu_sampler = user_data;
     const long sample      = sampler_get_value(cpu_sampler, 10, (SamplerProcessFunc) cpu_get_total_usage);
     StatusBar* status_bar  = app_context_get_status_bar(g_ctx);
@@ -26,25 +27,31 @@ static gboolean on_update_cpu_usage(gpointer user_data) {
     return G_SOURCE_CONTINUE;
 }
 
-gboolean on_cpu_sampled(gpointer user_data) {
+gboolean on_cpu_sampled(gpointer user_data)
+{
     g_idle_add(on_update_cpu_usage, user_data);
     return G_SOURCE_CONTINUE;
 }
 
-static gboolean on_update_process_tab(gpointer data) {
+static gboolean on_update_process_tab(gpointer data)
+{
     AppContext*  ctx           = data;
     const size_t process_count = process_tab_update(app_context_get_process_tab(ctx), app_context_get_process_list(ctx));
     status_bar_set_process_count(app_context_get_status_bar(ctx), process_count);
     return G_SOURCE_CONTINUE;
 }
 
-static void destroy(const GtkWidget* window, gpointer user_data) {
+static void destroy(const GtkWidget* window,
+                    gpointer         user_data)
+{
     (void) window;
     (void) user_data;
     app_context_destroy(g_ctx);
 }
 
-static void activate(GtkApplication* app, gpointer user_data) {
+static void activate(GtkApplication* app,
+                     gpointer        user_data)
+{
     GtkWidget*  window;
     GtkWidget*  vbox;
     GtkWidget*  notebook;
@@ -91,7 +98,9 @@ static void activate(GtkApplication* app, gpointer user_data) {
     gtk_widget_show_all(window);
 }
 
-int ui_start(int argc, char** argv) {
+int ui_start(int    argc,
+             char** argv)
+{
     GtkApplication* app;
     int             status;
 

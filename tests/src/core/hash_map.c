@@ -2,7 +2,8 @@
 
 #include "../../include/test.h"
 
-TEST(create) {
+TEST(create)
+{
     /* arrange */
     int      success;
     HashMap* actual;
@@ -17,7 +18,8 @@ TEST(create) {
     return success;
 }
 
-TEST(put) {
+TEST(put)
+{
     /* arrange */
     int      success;
     int      key;
@@ -36,7 +38,8 @@ TEST(put) {
     return success;
 }
 
-TEST(get) {
+TEST(get)
+{
     /* arrange */
     int      success;
     int      key;
@@ -58,7 +61,8 @@ TEST(get) {
     return success;
 }
 
-TEST(put_should_update_existing_entry) {
+TEST(put_should_update_existing_entry)
+{
     /* arrange */
     int      success;
     int      key;
@@ -80,7 +84,8 @@ TEST(put_should_update_existing_entry) {
     return success;
 }
 
-TEST(remove) {
+TEST(remove)
+{
     /* arrange */
     int      success;
     int      key;
@@ -100,7 +105,8 @@ TEST(remove) {
     return success;
 }
 
-TEST(count_when_map_is_empty) {
+TEST(count_when_map_is_empty)
+{
     /* arrange */
     int      success;
     HashMap* map;
@@ -118,7 +124,8 @@ TEST(count_when_map_is_empty) {
     return success;
 }
 
-TEST(count_when_map_has_elements) {
+TEST(count_when_map_has_elements)
+{
     /* arrange */
     int      success;
     HashMap* map;
@@ -139,7 +146,8 @@ TEST(count_when_map_has_elements) {
     return success;
 }
 
-TEST(iter_create) {
+TEST(iter_create)
+{
     /* arrange */
     int          success;
     HashMap*     map;
@@ -156,7 +164,8 @@ TEST(iter_create) {
     return success;
 }
 
-TEST(iter_next) {
+TEST(iter_next)
+{
     /* arrange */
     int          success;
     HashMap*     map;
