@@ -1,73 +1,8 @@
 # Project Structure
+Generated on: 2026-04-26 22:28:37
 
 ```
 .
-├── cmake-build-debug
-│   ├── build.ninja
-│   ├── CMakeCache.txt
-│   ├── CMakeFiles
-│   │   ├── 4.2.2
-│   │   │   ├── CMakeCCompiler.cmake
-│   │   │   ├── CMakeDetermineCompilerABI_C.bin
-│   │   │   ├── CMakeSystem.cmake
-│   │   │   └── CompilerIdC
-│   │   │       ├── a.out
-│   │   │       ├── CMakeCCompilerId.c
-│   │   │       └── tmp
-│   │   ├── clion-Debug-log.txt
-│   │   ├── clion-environment.txt
-│   │   ├── cmake.check_cache
-│   │   ├── CMakeConfigureLog.yaml
-│   │   ├── core.dir
-│   │   │   └── src
-│   │   │       └── core
-│   │   │           └── linux
-│   │   ├── cpu_test.dir
-│   │   │   └── tests
-│   │   │       └── src
-│   │   │           └── metrics
-│   │   ├── ctm.dir
-│   │   │   └── src
-│   │   ├── hash_map_test.dir
-│   │   │   └── tests
-│   │   │       └── src
-│   │   │           └── core
-│   │   ├── InstallScripts.json
-│   │   ├── mem_test.dir
-│   │   │   └── tests
-│   │   │       └── src
-│   │   │           └── metrics
-│   │   ├── metrics.dir
-│   │   │   └── src
-│   │   │       └── metrics
-│   │   ├── pkgRedirects
-│   │   ├── process_manager_test.dir
-│   │   │   └── tests
-│   │   │       └── src
-│   │   │           └── metrics
-│   │   ├── process_test.dir
-│   │   │   └── tests
-│   │   │       └── src
-│   │   │           └── metrics
-│   │   ├── ring_buffer_test.dir
-│   │   │   └── tests
-│   │   │       └── src
-│   │   │           └── core
-│   │   ├── rules.ninja
-│   │   ├── TargetDirectories.txt
-│   │   ├── testing.dir
-│   │   │   └── tests
-│   │   │       └── src
-│   │   └── ui.dir
-│   │       └── src
-│   │           └── ui
-│   │               └── tui
-│   ├── cmake_install.cmake
-│   ├── compile_commands.json
-│   ├── CTestTestfile.cmake
-│   └── Testing
-│       └── Temporary
-│           └── LastTest.log
 ├── CMakeLists.txt
 ├── Doxyfile
 ├── include
@@ -136,5 +71,5 @@
         ├── sound.c
         └── test.c
 
-70 directories, 64 files
+22 directories, 46 files
 ```

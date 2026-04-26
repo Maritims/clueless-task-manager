@@ -18,17 +18,14 @@ function(CtmAddTest lib_name test_name)
 endfunction()
 
 # ----- GENERATE OVERVIEW OF PROJECT STRUCTURE -----
-add_custom_target(run_tree
-        # -n: No color codes
-        # -I: Improved ignore pattern to catch common build folder names
-        COMMAND tree -n -I 'build*|cmake-build-*'
+string(TIMESTAMP CURRENT_DATE "%Y-%m-%d %H:%M:%S")
 
+add_custom_target(run_tree
         COMMAND echo "# Project Structure" > ${CMAKE_CURRENT_SOURCE_DIR}/STRUCTURE.md
-        #COMMAND echo "Generated on: \$(date)" >> ${CMAKE_CURRENT_SOURCE_DIR}/STRUCTURE.md
+        COMMAND echo "Generated on: ${CURRENT_DATE}" >> ${CMAKE_CURRENT_SOURCE_DIR}/STRUCTURE.md
         COMMAND echo "" >> ${CMAKE_CURRENT_SOURCE_DIR}/STRUCTURE.md
         COMMAND echo "\`\`\`" >> ${CMAKE_CURRENT_SOURCE_DIR}/STRUCTURE.md
-        # Apply the -n (no-color) flag here as well
-        COMMAND tree -n -I 'build*|cmake-build-*' >> ${CMAKE_CURRENT_SOURCE_DIR}/STRUCTURE.md
+        COMMAND tree -n -I "cmake*" >> ${CMAKE_CURRENT_SOURCE_DIR}/STRUCTURE.md
         COMMAND echo "\`\`\`" >> ${CMAKE_CURRENT_SOURCE_DIR}/STRUCTURE.md
 
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
