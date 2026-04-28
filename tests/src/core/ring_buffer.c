@@ -1,13 +1,13 @@
-#include "../include/core/ring_buffer.h"
-#include "../../include/test.h"
+#include "ring_buffer.h"
+#include "test.h"
 
 #include <errno.h>
 
 int test_alloc(void)
 {
     /* arrange */
-    int         success;
-    RingBuffer* actual;
+    int            success;
+    ring_buffer_t* actual;
 
     /* act */
     actual = ring_buffer_alloc(10, sizeof(int));
@@ -24,9 +24,9 @@ int test_alloc(void)
 int test_advance_and_peek(void)
 {
     /* arrange */
-    int         success;
-    RingBuffer* ring_buffer;
-    int*        buffer_item;
+    int            success;
+    ring_buffer_t* ring_buffer;
+    int*           buffer_item;
 
     ring_buffer = ring_buffer_alloc(3, sizeof(int));
 
@@ -50,9 +50,9 @@ int test_advance_and_peek(void)
 int test_wrap_around(void)
 {
     /* arrange */
-    int         success;
-    RingBuffer* ring_buffer;
-    int *       v1, *v2, *v3;
+    int            success;
+    ring_buffer_t* ring_buffer;
+    int *          v1, *v2, *v3;
 
     ring_buffer = ring_buffer_alloc(2, sizeof(int));
 

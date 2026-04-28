@@ -23,7 +23,7 @@ static process_result_t mark_processes_inactive(const list_node_t* process_node)
         process->is_active = 0;
     }
 
-    return PROCESS_SUCCESS;
+    return PROCESS_SUCCESS_READ;
 }
 
 static process_result_t remove_inactive_processes(const list_node_t*       process_node,
@@ -48,7 +48,7 @@ static process_result_t remove_inactive_processes(const list_node_t*       proce
         }
     }
 
-    return PROCESS_SUCCESS;
+    return PROCESS_SUCCESS_READ;
 }
 
 static process_result_t find_process_by_pid(const list_node_t* process_node,
@@ -66,7 +66,7 @@ static process_result_t find_process_by_pid(const list_node_t* process_node,
         process = LIST_ENTRY(curr, process_t, node);
         if (process->pid == pid) {
             *out = process;
-            return PROCESS_SUCCESS;
+            return PROCESS_SUCCESS_READ;
         }
     }
 
@@ -120,15 +120,15 @@ process_result_t process_list_refresh(list_node_t*             list,
         }
 
         upid = (unsigned int) pid;
-        if (find_process_by_pid(list, upid, &existing_process) == PROCESS_SUCCESS) {
+        if (find_process_by_pid(list, upid, &existing_process) == PROCESS_SUCCESS_READ) {
             const process_result_t read_result = process_read(upid, existing_process);
-            existing_process->is_active        = read_result == PROCESS_SUCCESS;
+            existing_process->is_active        = read_result == PROCESS_SUCCESS_READ;
 
-            if (read_result == PROCESS_SUCCESS) {
+            if (read_result == PROCESS_SUCCESS_READ) {
                 if (on_process_updated) {
                     on_process_updated(existing_process);
                 }
-            } else if (read_result != PROCESS_SUCCESS) {
+            } else if (read_result != PROCESS_SUCCESS_READ) {
                 /* Process was found by readdir but not capture, mark as inactive for removal */
                 existing_process->is_active = 0;
             } else {
@@ -142,7 +142,7 @@ process_result_t process_list_refresh(list_node_t*             list,
                 return PROCESS_ERR_INTERNAL;
             }
 
-            if (process_read(upid, new_process) != PROCESS_SUCCESS) {
+            if (process_read(upid, new_process) != PROCESS_SUCCESS_READ) {
                 free(new_process);
                 if (errno == ENOENT) {
                     continue;
@@ -168,5 +168,5 @@ process_result_t process_list_refresh(list_node_t*             list,
     /* Remove inactive processes */
     remove_inactive_processes(list, on_process_removed);
 
-    return PROCESS_SUCCESS;
+    return PROCESS_SUCCESS_READ;
 }

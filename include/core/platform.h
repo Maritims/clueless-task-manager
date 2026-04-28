@@ -2,6 +2,8 @@
 #define CTM_CTM_PLATFORM_H
 #include <stddef.h>
 
+#define USERNAME_MAX 32
+
 int ctm_snprintf(char*       buffer,
                  size_t      size,
                  const char* format,

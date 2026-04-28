@@ -1,20 +1,19 @@
-#include "metrics/ctm_memory_metrics.h"
-
-#include "../../include/test.h"
-#include "internal/ctm_memory_metrics_internal.h"
+#include "mem.h"
+#include "mem_internal.h"
+#include "test.h"
 
 TEST(read)
 {
     /* arrange */
-    int                         success;
-    ctm_memory_metrics_status_t actual;
-    ctm_memory_metrics_t        memory_metrics;
+    int          success;
+    mem_result_t actual;
+    mem_t        memory_metrics;
 
     /* act */
-    actual = ctm_memory_metrics_read(&memory_metrics);
+    actual = mem_read(&memory_metrics);
 
     /* assert */
-    success = assert_int_equality(CTM_MEMORY_METRICS_SUCCESS, actual, ctm_memory_metrics_strerror(actual));
+    success = assert_int_equality(MEM_SUCCESS, actual, mem_strerror(actual));
 
     return success;
 }

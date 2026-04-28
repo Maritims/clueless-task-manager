@@ -5,6 +5,10 @@ set(CMAKE_C_STANDARD 90)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
 set(ANSI_FLAGS -Wall -Wextra -Werror -Wstrict-prototypes -Wmissing-prototypes -pedantic)
 add_compile_options(${ANSI_FLAGS})
 
@@ -13,7 +17,7 @@ enable_testing()
 function(CtmAddTest lib_name test_name)
     add_executable(${test_name}_test tests/src/${lib_name}/${test_name}.c)
     target_compile_options(${test_name}_test PRIVATE -Wno-missing-prototypes)
-    target_link_libraries(${test_name}_test PRIVATE testing ${ARGN})
+    target_link_libraries(${test_name}_test PRIVATE testing ${lib_name} ${ARGN})
     add_test(NAME ${test_name} COMMAND ${test_name}_test)
 endfunction()
 
@@ -37,6 +41,12 @@ add_custom_target(run_tree
 
 # ----- MODULE DEFINITIONS -----
 
+# ----- TESTING MODULE -----
+add_library(testing STATIC
+        tests/src/test.c
+)
+target_include_directories(testing PUBLIC tests/include)
+
 # ----- CORE MODULE -----
 add_library(core STATIC
         src/core/linux/platform.c
@@ -44,6 +54,7 @@ add_library(core STATIC
         src/core/list.c
         src/core/log.c
         src/core/ring_buffer.c
+        src/core/io.c
 )
 target_include_directories(core PUBLIC include/core)
 CtmAddTest(core hash_map)
@@ -60,10 +71,18 @@ add_library(metrics STATIC
 target_include_directories(metrics PUBLIC include/metrics)
 target_include_directories(metrics PRIVATE src/metrics/internal)
 target_link_libraries(metrics PRIVATE core)
+
 CtmAddTest(metrics cpu)
+target_include_directories(cpu_test PRIVATE src/metrics/internal)
+
 CtmAddTest(metrics mem)
+target_include_directories(mem_test PRIVATE src/metrics/internal)
+
 CtmAddTest(metrics process)
-CtmAddTest(metrics process_manager)
+target_include_directories(process_test PRIVATE src/metrics/internal)
+
+CtmAddTest(metrics process_manager core)
+target_include_directories(process_manager_test PRIVATE src/metrics/internal)
 
 # ----- UI MODULE -----
 add_library(ui STATIC
@@ -73,12 +92,6 @@ add_library(ui STATIC
 target_include_directories(ui PUBLIC include/ui)
 find_package(Curses REQUIRED)
 target_link_libraries(ui PRIVATE ${CURSES_LIBRARIES} panel core metrics)
-
-# ----- TESTING MODULE -----
-add_library(testing STATIC
-        tests/src/test.c
-)
-target_include_directories(testing PRIVATE tests/include/test.h)
 
 # ----- MAIN EXECUTABLE -----
 add_executable(ctm src/main.c)

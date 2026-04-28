@@ -1,24 +1,21 @@
-#include <unistd.h>
-
-#include "metrics/ctm_cpu_metrics.h"
-
+#include "cpu.h"
 #include <limits.h>
-
-#include "internal/ctm_cpu_metrics_internal.h"
-#include "../../include/test.h"
+#include <unistd.h>
+#include "test.h"
+#include "cpu_internal.h"
 
 TEST(read)
 {
     /* arrange */
-    int                      success;
-    ctm_cpu_metrics_status_t actual;
-    ctm_cpu_metrics_t        cpu_metrics;
+    int          success;
+    cpu_result_t actual;
+    cpu_t        cpu_metrics;
 
     /* act */
-    actual = ctm_cpu_metrics_read(&cpu_metrics);
+    actual = cpu_read(&cpu_metrics);
 
     /* assert */
-    success = assert_int_equality(CTM_CPU_METRICS_SUCCESS, actual, "ctm_cpu_Metrics_read() should return CTM_CPU_METRICS_SUCCESS");
+    success = assert_int_equality(CPU_SUCCESS, actual, "ctm_cpu_Metrics_read() should return CTM_CPU_METRICS_SUCCESS");
 
     return success;
 }
@@ -26,20 +23,20 @@ TEST(read)
 TEST(get_total_usage)
 {
     /* arrange */
-    int                      success;
-    ctm_cpu_metrics_t        current, previous;
-    unsigned long            out_value = ULONG_MAX;
-    ctm_cpu_metrics_status_t actual;
+    int           success;
+    cpu_t         current, previous;
+    unsigned long out_value = ULONG_MAX;
+    cpu_result_t  actual;
 
-    ctm_cpu_metrics_read(&previous);
+    cpu_read(&previous);
     sleep(1);
-    ctm_cpu_metrics_read(&current);
+    cpu_read(&current);
 
     /* act */
-    actual = ctm_cpu_metrics_get_total_usage(&current, &previous, &out_value);
+    actual = cpu_total_usage(&current, &previous, &out_value);
 
     /* assert */
-    success = assert_int_equality(CTM_CPU_METRICS_SUCCESS, actual, "ctm_cpu_metrics_get_total_usage() should return CTM_CPU_METRICS_SUCCESS");
+    success = assert_int_equality(CPU_SUCCESS, actual, "ctm_cpu_metrics_get_total_usage() should return CTM_CPU_METRICS_SUCCESS");
 
     return success;
 }

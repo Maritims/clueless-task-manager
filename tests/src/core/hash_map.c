@@ -1,6 +1,5 @@
-#include "../include/core/hash_map.h"
-
-#include "../../include/test.h"
+#include "hash_map.h"
+#include "test.h"
 
 TEST(create)
 {

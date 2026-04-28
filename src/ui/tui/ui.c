@@ -45,7 +45,6 @@ int ui_start(int    argc,
 
     mvprintw(3, 2, "PID     Name                  State");
     mvprintw(4, 2, "------  --------------------  -----");
-    mvprintw(5, 2, "%6s  %-100s  %-6s", "123", "FooBar", "Running");
 
     LIST_FOREACH(curr, &process_list) {
         process_t*   process;

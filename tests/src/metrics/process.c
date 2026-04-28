@@ -1,19 +1,19 @@
-#include "metrics/ctm_process_metrics.h"
-#include "../../include/test.h"
-#include "internal/ctm_process_metrics_internal.h"
+#include "process.h"
+#include "process_internal.h"
+#include "test.h"
 
 TEST(read)
 {
     /* arrange */
-    int                          success;
-    ctm_process_metrics_status_t actual;
-    ctm_process_metrics_t        process_metrics;
+    int              success;
+    process_result_t actual;
+    process_t        process;
 
     /* act */
-    actual = ctm_process_metrics_read(1, &process_metrics);
+    actual = process_read(1, &process);
 
     /* assert */
-    success = assert_int_equality(CTM_PROCESS_METRICS_SUCCESS, actual, ctm_process_metrics_strerror(actual));
+    success = assert_int_equality(PROCESS_SUCCESS_READ, actual, process_strerror(actual));
 
     return success;
 }

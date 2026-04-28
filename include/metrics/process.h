@@ -10,12 +10,17 @@ typedef struct process_state process_state_t;
 typedef void (*process_callback_t)(process_t* process);
 
 typedef enum {
-    PROCESS_SUCCESS,
+    PROCESS_SUCCESS_READ,
+    PROCESS_SUCCESS_NOT_FOUND,
     PROCESS_ERR_INVALID_ARG,
+    PROCESS_ERR_READ_PATH,
+    PROCESS_ERR_READ_FILE,
+    PROCESS_ERR_READ_USER,
+    PROCESS_ERR_READ_NAME,
+    PROCESS_ERR_PARSE_FILE,
     PROCESS_ERR_NOT_FOUND,
     PROCESS_ERR_OPEN,
     PROCESS_ERR_READ,
-    PROCESS_ERR_PARSE,
     PROCESS_ERR_INTERNAL
 } process_result_t;
 
