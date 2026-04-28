@@ -70,7 +70,7 @@ add_library(metrics STATIC
 )
 target_include_directories(metrics PUBLIC include/metrics)
 target_include_directories(metrics PRIVATE src/metrics/internal)
-target_link_libraries(metrics PRIVATE core)
+target_link_libraries(metrics PUBLIC core)
 
 CtmAddTest(metrics cpu)
 target_include_directories(cpu_test PRIVATE src/metrics/internal)
