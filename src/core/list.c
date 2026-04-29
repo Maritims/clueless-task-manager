@@ -1,9 +1,18 @@
 #include "list.h"
 
+#include <stdlib.h>
+
 void list_init(list_node_t* head)
 {
-    head->next = head;
-    head->prev = head;
+    head->next   = head;
+    head->prev   = head;
+    head->count  = malloc(sizeof(size_t));
+    *head->count = 0;
+}
+
+size_t list_count(const list_node_t* node)
+{
+    return *node->count;
 }
 
 void list_add_node(list_node_t* head,
@@ -23,8 +32,10 @@ void list_add_node(list_node_t* head,
 
     new_node->next   = head->next;
     new_node->prev   = head;
+    new_node->count  = head->count;
     head->next->prev = new_node;
     head->next       = new_node;
+    (*head->count)++;
 }
 
 void list_delete_node(list_node_t* node)
@@ -43,6 +54,8 @@ void list_delete_node(list_node_t* node)
 
     node->next->prev = node->prev;
     node->prev->next = node->next;
-    node->next       = NULL;
-    node->prev       = NULL;
+    (*node->count)--;
+    node->next  = NULL;
+    node->prev  = NULL;
+    node->count = NULL;
 }
