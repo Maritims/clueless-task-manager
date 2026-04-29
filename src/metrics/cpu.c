@@ -6,6 +6,11 @@
 #include "cpu.h"
 #include "internal/cpu_internal.h"
 
+static unsigned long get_total_time(const cpu_t* cpu)
+{
+    return cpu->user + cpu->nice + cpu->system + cpu->idle + cpu->iowait + cpu->irq + cpu->softirq;
+}
+
 cpu_result_t cpu_read(cpu_t* out)
 {
     FILE*  fp;
@@ -67,46 +72,6 @@ cpu_result_t cpu_sizeof(size_t* out)
     return CPU_ERR_INVALID_ARG;
 }
 
-cpu_result_t cpu_idle_time(const cpu_t*   cpu,
-                           unsigned long* out)
-{
-    if (cpu) {
-        *out = cpu->idle;
-        return CPU_SUCCESS;
-    }
-    return CPU_ERR_INVALID_ARG;
-}
-
-cpu_result_t cpu_total_time(const cpu_t*   cpu,
-                            unsigned long* out)
-{
-    if (cpu && out) {
-        *out = cpu->user + cpu->nice + cpu->system + cpu->idle + cpu->iowait + cpu->irq + cpu->softirq;
-        return CPU_SUCCESS;
-    }
-    return CPU_ERR_INVALID_ARG;
-}
-
-cpu_result_t cpu_user_usage(const cpu_t*         curr,
-                            const cpu_t*         prev,
-                            const unsigned long* out)
-{
-    (void) curr;
-    (void) prev;
-    (void) out;
-    return 0L;
-}
-
-cpu_result_t cpu_system_usage(const cpu_t*         curr,
-                              const cpu_t*         prev,
-                              const unsigned long* out)
-{
-    (void) curr;
-    (void) prev;
-    (void) out;
-    return 0L;
-}
-
 cpu_result_t cpu_total_usage(const cpu_t*   curr,
                              const cpu_t*   prev,
                              unsigned long* out)
@@ -123,10 +88,10 @@ cpu_result_t cpu_total_usage(const cpu_t*   curr,
         return CPU_ERR_INVALID_ARG;
     }
 
-    previous_idle_time = prev->idle;
-    current_idle_time  = curr->idle;
-    cpu_total_time(prev, &previous_total_time);
-    cpu_total_time(curr, &current_total_time);
+    previous_idle_time  = prev->idle;
+    current_idle_time   = curr->idle;
+    previous_total_time = get_total_time(prev);
+    current_total_time  = get_total_time(curr);
 
     if (previous_total_time == 0 && current_total_time == 0) {
         return CPU_ERR_INTERNAL;

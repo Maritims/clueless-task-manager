@@ -167,13 +167,9 @@ process_result_t process_destroy(process_t* process)
     return PROCESS_ERR_INVALID_ARG;
 }
 
-process_result_t process_sizeof(size_t* out)
+size_t process_sizeof(void)
 {
-    if (out) {
-        *out = sizeof(process_t);
-        return PROCESS_SUCCESS_READ;
-    }
-    return PROCESS_ERR_INVALID_ARG;
+    return sizeof(process_t);
 }
 
 process_result_t process_from_node(list_node_t* node,

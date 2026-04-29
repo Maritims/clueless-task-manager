@@ -4,7 +4,204 @@
 
 ```
 .
+├── build
+│   ├── bin
+│   │   └── ctm
+│   ├── CMakeCache.txt
+│   ├── CMakeFiles
+│   │   ├── 3.31.6
+│   │   │   ├── CMakeCCompiler.cmake
+│   │   │   ├── CMakeDetermineCompilerABI_C.bin
+│   │   │   ├── CMakeSystem.cmake
+│   │   │   └── CompilerIdC
+│   │   │       ├── a.out
+│   │   │       ├── CMakeCCompilerId.c
+│   │   │       └── tmp
+│   │   ├── CMakeConfigureLog.yaml
+│   │   ├── CMakeDirectoryInformation.cmake
+│   │   ├── CMakeRuleHashes.txt
+│   │   ├── CMakeScratch
+│   │   ├── core.dir
+│   │   │   ├── build.make
+│   │   │   ├── compiler_depend.internal
+│   │   │   ├── compiler_depend.make
+│   │   │   ├── compiler_depend.ts
+│   │   │   ├── DependInfo.cmake
+│   │   │   ├── depend.make
+│   │   │   ├── flags.make
+│   │   │   ├── link.txt
+│   │   │   ├── progress.make
+│   │   │   └── src
+│   │   │       └── core
+│   │   │           ├── hash_map.c.o
+│   │   │           ├── hash_map.c.o.d
+│   │   │           ├── io.c.o
+│   │   │           ├── io.c.o.d
+│   │   │           ├── linux
+│   │   │           │   ├── platform.c.o
+│   │   │           │   └── platform.c.o.d
+│   │   │           ├── list.c.o
+│   │   │           ├── list.c.o.d
+│   │   │           ├── log.c.o
+│   │   │           ├── log.c.o.d
+│   │   │           ├── ring_buffer.c.o
+│   │   │           └── ring_buffer.c.o.d
+│   │   ├── cpu_test.dir
+│   │   │   ├── build.make
+│   │   │   ├── compiler_depend.make
+│   │   │   ├── compiler_depend.ts
+│   │   │   ├── DependInfo.cmake
+│   │   │   ├── depend.make
+│   │   │   ├── flags.make
+│   │   │   ├── link.txt
+│   │   │   ├── progress.make
+│   │   │   └── tests
+│   │   │       └── src
+│   │   │           └── metrics
+│   │   ├── ctm.dir
+│   │   │   ├── build.make
+│   │   │   ├── compiler_depend.internal
+│   │   │   ├── compiler_depend.make
+│   │   │   ├── compiler_depend.ts
+│   │   │   ├── DependInfo.cmake
+│   │   │   ├── depend.make
+│   │   │   ├── flags.make
+│   │   │   ├── link.d
+│   │   │   ├── link.txt
+│   │   │   ├── progress.make
+│   │   │   └── src
+│   │   │       ├── main.c.o
+│   │   │       └── main.c.o.d
+│   │   ├── hash_map_test.dir
+│   │   │   ├── build.make
+│   │   │   ├── compiler_depend.make
+│   │   │   ├── compiler_depend.ts
+│   │   │   ├── DependInfo.cmake
+│   │   │   ├── depend.make
+│   │   │   ├── flags.make
+│   │   │   ├── link.txt
+│   │   │   ├── progress.make
+│   │   │   └── tests
+│   │   │       └── src
+│   │   │           └── core
+│   │   ├── Makefile2
+│   │   ├── Makefile.cmake
+│   │   ├── mem_test.dir
+│   │   │   ├── build.make
+│   │   │   ├── compiler_depend.make
+│   │   │   ├── compiler_depend.ts
+│   │   │   ├── DependInfo.cmake
+│   │   │   ├── depend.make
+│   │   │   ├── flags.make
+│   │   │   ├── link.txt
+│   │   │   ├── progress.make
+│   │   │   └── tests
+│   │   │       └── src
+│   │   │           └── metrics
+│   │   ├── metrics.dir
+│   │   │   ├── build.make
+│   │   │   ├── compiler_depend.internal
+│   │   │   ├── compiler_depend.make
+│   │   │   ├── compiler_depend.ts
+│   │   │   ├── DependInfo.cmake
+│   │   │   ├── depend.make
+│   │   │   ├── flags.make
+│   │   │   ├── link.txt
+│   │   │   ├── progress.make
+│   │   │   └── src
+│   │   │       └── metrics
+│   │   │           ├── cpu.c.o
+│   │   │           ├── cpu.c.o.d
+│   │   │           ├── mem.c.o
+│   │   │           ├── mem.c.o.d
+│   │   │           ├── process.c.o
+│   │   │           ├── process.c.o.d
+│   │   │           ├── process_manager.c.o
+│   │   │           ├── process_manager.c.o.d
+│   │   │           ├── sampler.c.o
+│   │   │           └── sampler.c.o.d
+│   │   ├── pkgRedirects
+│   │   ├── process_manager_test.dir
+│   │   │   ├── build.make
+│   │   │   ├── compiler_depend.make
+│   │   │   ├── compiler_depend.ts
+│   │   │   ├── DependInfo.cmake
+│   │   │   ├── depend.make
+│   │   │   ├── flags.make
+│   │   │   ├── link.txt
+│   │   │   ├── progress.make
+│   │   │   └── tests
+│   │   │       └── src
+│   │   │           └── metrics
+│   │   ├── process_test.dir
+│   │   │   ├── build.make
+│   │   │   ├── compiler_depend.make
+│   │   │   ├── compiler_depend.ts
+│   │   │   ├── DependInfo.cmake
+│   │   │   ├── depend.make
+│   │   │   ├── flags.make
+│   │   │   ├── link.txt
+│   │   │   ├── progress.make
+│   │   │   └── tests
+│   │   │       └── src
+│   │   │           └── metrics
+│   │   ├── progress.marks
+│   │   ├── ring_buffer_test.dir
+│   │   │   ├── build.make
+│   │   │   ├── compiler_depend.make
+│   │   │   ├── compiler_depend.ts
+│   │   │   ├── DependInfo.cmake
+│   │   │   ├── depend.make
+│   │   │   ├── flags.make
+│   │   │   ├── link.txt
+│   │   │   ├── progress.make
+│   │   │   └── tests
+│   │   │       └── src
+│   │   │           └── core
+│   │   ├── run_tree.dir
+│   │   │   ├── build.make
+│   │   │   ├── compiler_depend.make
+│   │   │   ├── compiler_depend.ts
+│   │   │   ├── DependInfo.cmake
+│   │   │   └── progress.make
+│   │   ├── TargetDirectories.txt
+│   │   ├── testing.dir
+│   │   │   ├── build.make
+│   │   │   ├── compiler_depend.make
+│   │   │   ├── compiler_depend.ts
+│   │   │   ├── DependInfo.cmake
+│   │   │   ├── depend.make
+│   │   │   ├── flags.make
+│   │   │   ├── link.txt
+│   │   │   ├── progress.make
+│   │   │   └── tests
+│   │   │       └── src
+│   │   └── ui.dir
+│   │       ├── build.make
+│   │       ├── compiler_depend.internal
+│   │       ├── compiler_depend.make
+│   │       ├── compiler_depend.ts
+│   │       ├── DependInfo.cmake
+│   │       ├── depend.make
+│   │       ├── flags.make
+│   │       ├── link.txt
+│   │       ├── progress.make
+│   │       └── src
+│   │           └── ui
+│   │               └── tui
+│   │                   ├── process_tab.c.o
+│   │                   ├── process_tab.c.o.d
+│   │                   ├── ui.c.o
+│   │                   └── ui.c.o.d
+│   ├── compile_commands.json
+│   ├── CTestTestfile.cmake
+│   ├── lib
+│   │   ├── libcore.a
+│   │   ├── libmetrics.a
+│   │   └── libui.a
+│   └── Makefile
 ├── CMakeLists.txt
+├── ctm.kdev4
 ├── Doxyfile
 ├── include
 │   ├── app
@@ -74,5 +271,5 @@
         ├── sound.c
         └── test.c
 
-22 directories, 48 files
+72 directories, 195 files
 ```

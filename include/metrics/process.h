@@ -33,7 +33,7 @@ process_result_t process_read(unsigned int pid,
 
 process_result_t process_destroy(process_t* process);
 
-process_result_t process_sizeof(size_t* out);
+size_t process_sizeof(void);
 
 process_result_t process_from_node(list_node_t* node,
                                    process_t**  out);

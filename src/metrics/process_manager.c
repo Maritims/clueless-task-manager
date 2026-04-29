@@ -58,7 +58,7 @@ static process_result_t find_process_by_pid(const list_node_t* process_node,
     list_node_t* curr;
     process_t*   process;
 
-    if (process_node == NULL || pid == 0 || out == NULL) {
+    if (pid == 0) {
         return PROCESS_ERR_INVALID_ARG;
     }
 
